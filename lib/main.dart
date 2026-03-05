@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'features/dashboard/screens/dashboard_screen.dart';
+import 'features/splash/screens/splash_screen.dart';
 
 void main() {
   runApp(const CultivaApp());
@@ -15,7 +15,7 @@ class CultivaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Cultiva+',
       theme: AppTheme.lightTheme,
-      home: const DashboardScreen(),
+      home: const SplashScreen(),
     );
   }
 }
