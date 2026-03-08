@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../crop_register/screens/crop_register_screen.dart';
+import '../../crop_tracking/screens/crop_tracking_screen.dart';
 
 class Cultivo {
   final String id;
@@ -364,18 +365,28 @@ class _MisCultivosScreenState extends State<MisCultivosScreen> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Ver seguimiento detallado",
-                      style: TextStyle(
-                        color: Color(0xFF0D5D33),
-                        fontWeight: FontWeight.bold,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CropTrackingScreen(),
                       ),
-                    ),
-                    Icon(Icons.chevron_right, color: Color(0xFF0D5D33)),
-                  ],
+                    );
+                  },
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Ver seguimiento detallado",
+                        style: TextStyle(
+                          color: Color(0xFF0D5D33),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: Color(0xFF0D5D33)),
+                    ],
+                  ),
                 ),
               ],
             ),
