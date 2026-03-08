@@ -127,7 +127,6 @@ class CropDetailsScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            /// HEADER IMAGE
             Stack(
               children: [
                 Image.network(
@@ -193,7 +192,6 @@ class CropDetailsScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  /// SIEMBRA / COSECHA
                   Row(
                     children: [
                       Expanded(
@@ -218,7 +216,6 @@ class CropDetailsScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  /// CICLO
                   cardSection(
                     icon: Icons.access_time,
                     title: "Ciclo vegetativo",
@@ -233,7 +230,6 @@ class CropDetailsScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  /// FERTILIZANTES
                   cardSection(
                     icon: Icons.water_drop,
                     title: "Fertilización recomendada",
@@ -252,7 +248,6 @@ class CropDetailsScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  /// PLAGAS
                   cardSection(
                     icon: Icons.bug_report,
                     title: "Plagas principales",
@@ -271,7 +266,6 @@ class CropDetailsScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  /// BOTON PDF
                   ElevatedButton.icon(
                     onPressed: () {},
                     icon: const Icon(Icons.download),
@@ -285,7 +279,6 @@ class CropDetailsScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  /// REGISTRAR
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pushNamed(context, "/registrar");

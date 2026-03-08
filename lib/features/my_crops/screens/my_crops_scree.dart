@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../crop_register/screens/crop_register_screen.dart';
 
 class Cultivo {
   final String id;
@@ -187,9 +188,19 @@ class _MisCultivosScreenState extends State<MisCultivosScreen> {
                   ),
                 ],
               ),
-              CircleAvatar(
-                backgroundColor: Colors.white.withValues( alpha: 0.2),
-                child: const Icon(Icons.add, color: Colors.white),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CropRegisterScreen(),
+                    ),
+                  );
+                },
+                child: CircleAvatar(
+                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  child: const Icon(Icons.add, color: Colors.white),
+                ),
               ),
             ],
           ),
