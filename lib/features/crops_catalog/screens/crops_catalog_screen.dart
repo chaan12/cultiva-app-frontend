@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../crop_details/screens/crop_details_screen.dart';
 
 // --- MODELO DE DATOS ---
 class CultivoCatalogo {
@@ -55,7 +56,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     ),
     CultivoCatalogo(
       id: 'frijol',
-      nombre: 'Primavera-Otoño',
+      nombre: 'Frijol',
       temporada: 'Primavera-Otoño',
       imagen:
           'https://images.unsplash.com/photo-1605402966404-ec40b9bd5009?q=80&w=400',
@@ -150,7 +151,14 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
         ],
       ),
       child: InkWell(
-        onTap: () {}, // Navegar a detalles
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CropDetailsScreen(id: cultivo.id),
+            ),
+          );
+        },
         borderRadius: BorderRadius.circular(20),
         child: Padding(
           padding: const EdgeInsets.all(12),
