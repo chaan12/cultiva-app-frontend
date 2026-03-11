@@ -4,10 +4,18 @@ import '../../crop_tracking/services/crop_tracking_service.dart';
 import '../../../shared/models/crop_record.dart';
 
 class CropRecordCard extends StatelessWidget {
-  const CropRecordCard({super.key, required this.crop, required this.onTap});
+  const CropRecordCard({
+    super.key,
+    required this.crop,
+    required this.onTap,
+    this.onComplete,
+    this.onDelete,
+  });
 
   final CropRecord crop;
   final VoidCallback onTap;
+  final VoidCallback? onComplete;
+  final VoidCallback? onDelete;
 
   Color get _statusColor {
     switch (CropTrackingService.buildSummary(crop).status) {
@@ -79,23 +87,55 @@ class CropRecordCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _statusColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    _statusLabel,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _statusColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _statusLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (onComplete != null || onDelete != null)
+                      PopupMenuButton<String>(
+                        icon: const Icon(
+                          Icons.more_vert,
+                          color: Colors.black54,
+                        ),
+                        onSelected: (value) {
+                          if (value == 'complete') {
+                            onComplete?.call();
+                          }
+                          if (value == 'delete') {
+                            onDelete?.call();
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          if (onComplete != null)
+                            const PopupMenuItem<String>(
+                              value: 'complete',
+                              child: Text('Marcar como completado'),
+                            ),
+                          if (onDelete != null)
+                            const PopupMenuItem<String>(
+                              value: 'delete',
+                              child: Text('Borrar cultivo'),
+                            ),
+                        ],
+                      ),
+                  ],
                 ),
               ],
             ),

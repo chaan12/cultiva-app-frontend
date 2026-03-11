@@ -258,10 +258,10 @@ class DashboardScreen extends StatelessWidget {
                           'Eventos próximos',
                           store.upcomingEventsCount.toString(),
                         ),
-                        if (store.nextHarvestCrop != null)
+                        if (store.nextPendingEventCrop != null)
                           _metricRow(
                             'Próximo hito',
-                            '${store.nextHarvestCrop!.name}: ${CropTrackingService.buildSummary(store.nextHarvestCrop!).nextEventLabel}',
+                            '${store.nextPendingEventCrop!.name}: ${CropTrackingService.buildSummary(store.nextPendingEventCrop!).nextEventLabel}',
                           ),
                       ],
                     ),

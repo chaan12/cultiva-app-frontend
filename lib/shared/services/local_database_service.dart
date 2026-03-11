@@ -53,6 +53,15 @@ class LocalDatabaseService {
     );
   }
 
+  Future<void> deleteCrop(String cropId) async {
+    final crops = await loadCrops();
+    crops.removeWhere((item) => item.id == cropId);
+    await _prefs.setString(
+      _cropsKey,
+      jsonEncode(crops.map((item) => item.toMap()).toList()),
+    );
+  }
+
   Future<AppSettings> loadSettings() async {
     final raw = await _prefs.getString(_settingsKey);
     if (raw == null || raw.isEmpty) {

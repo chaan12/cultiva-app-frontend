@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/models/crop_record.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../crop_register/screens/crop_register_screen.dart';
 import '../../crop_tracking/screens/crop_tracking_screen.dart';
@@ -25,17 +26,25 @@ class MisCultivosScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 25),
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.trending_up, color: Color(0xFF0D5D33)),
-                      SizedBox(width: 8),
-                      Text(
-                        'Cultivos activos',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0D5D33),
+                      const Icon(Icons.trending_up, color: Color(0xFF0D5D33)),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Cultivos activos',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0D5D33),
+                          ),
                         ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () =>
+                            _showHistory(context, store.cropHistory),
+                        icon: const Icon(Icons.history),
+                        label: Text('Historial (${store.cropHistory.length})'),
                       ),
                     ],
                   ),
@@ -60,11 +69,14 @@ class MisCultivosScreen extends StatelessWidget {
                               ),
                             );
                           },
+                          onComplete: () =>
+                              _markCropCompleted(context, store, crop),
+                          onDelete: () => _deleteCrop(context, store, crop),
                         );
                       },
                     ),
                   const SizedBox(height: 30),
-                  if (store.nextHarvestCrop != null)
+                  if (store.nextPendingEventCrop != null)
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -82,7 +94,7 @@ class MisCultivosScreen extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              '${store.nextHarvestCrop!.name}: ${CropTrackingService.buildSummary(store.nextHarvestCrop!).nextEventLabel}',
+                              '${store.nextPendingEventCrop!.name}: ${CropTrackingService.buildSummary(store.nextPendingEventCrop!).nextEventLabel}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -233,6 +245,176 @@ class MisCultivosScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _markCropCompleted(
+    BuildContext context,
+    dynamic store,
+    CropRecord crop,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Completar cultivo'),
+        content: Text(
+          '¿Quieres mover ${crop.name} al historial como cultivo completado?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Completar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+    await store.completeCrop(crop.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${crop.name} movido al historial.')),
+      );
+    }
+  }
+
+  Future<void> _deleteCrop(
+    BuildContext context,
+    dynamic store,
+    CropRecord crop,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Borrar cultivo'),
+        content: Text(
+          '¿Quieres borrar ${crop.name}? Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text('Borrar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+    await store.deleteCrop(crop.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${crop.name} eliminado.')));
+    }
+  }
+
+  void _showHistory(BuildContext context, List<CropRecord> history) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFFF1F4E0),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Historial de cultivos',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                if (history.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      'Aún no tienes cultivos completados.',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: history.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final crop = history[index];
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.black12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      crop.name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Color(0xFF00A344),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${crop.formattedArea} • ${crop.locationName}',
+                                style: const TextStyle(color: Colors.black54),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Completado el ${crop.completedAt == null ? crop.formattedSowingDate : '${crop.completedAt!.day.toString().padLeft(2, '0')}/${crop.completedAt!.month.toString().padLeft(2, '0')}/${crop.completedAt!.year}'}',
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

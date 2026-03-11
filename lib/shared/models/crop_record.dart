@@ -15,6 +15,8 @@ class CropRecord {
     required this.imageAsset,
     required this.accentColorValue,
     required this.createdAt,
+    this.isCompleted = false,
+    this.completedAt,
   });
 
   factory CropRecord.fromMap(Map<String, Object?> map) {
@@ -30,6 +32,10 @@ class CropRecord {
       imageAsset: map['imageAsset'] as String,
       accentColorValue: (map['accentColorValue'] as num).toInt(),
       createdAt: DateTime.parse(map['createdAt'] as String),
+      isCompleted: (map['isCompleted'] as bool?) ?? false,
+      completedAt: map['completedAt'] == null
+          ? null
+          : DateTime.parse(map['completedAt'] as String),
     );
   }
 
@@ -52,6 +58,7 @@ class CropRecord {
       imageAsset: item.imageAsset,
       accentColorValue: item.badgeColor.toARGB32(),
       createdAt: now,
+      isCompleted: false,
     );
   }
 
@@ -66,6 +73,8 @@ class CropRecord {
   final String imageAsset;
   final int accentColorValue;
   final DateTime createdAt;
+  final bool isCompleted;
+  final DateTime? completedAt;
 
   Map<String, Object?> toMap() {
     return <String, Object?>{
@@ -80,7 +89,42 @@ class CropRecord {
       'imageAsset': imageAsset,
       'accentColorValue': accentColorValue,
       'createdAt': createdAt.toIso8601String(),
+      'isCompleted': isCompleted,
+      'completedAt': completedAt?.toIso8601String(),
     };
+  }
+
+  CropRecord copyWith({
+    String? id,
+    String? cropId,
+    String? name,
+    double? areaHa,
+    DateTime? sowingDate,
+    String? locationName,
+    String? season,
+    int? cycleDays,
+    String? imageAsset,
+    int? accentColorValue,
+    DateTime? createdAt,
+    bool? isCompleted,
+    DateTime? completedAt,
+    bool clearCompletedAt = false,
+  }) {
+    return CropRecord(
+      id: id ?? this.id,
+      cropId: cropId ?? this.cropId,
+      name: name ?? this.name,
+      areaHa: areaHa ?? this.areaHa,
+      sowingDate: sowingDate ?? this.sowingDate,
+      locationName: locationName ?? this.locationName,
+      season: season ?? this.season,
+      cycleDays: cycleDays ?? this.cycleDays,
+      imageAsset: imageAsset ?? this.imageAsset,
+      accentColorValue: accentColorValue ?? this.accentColorValue,
+      createdAt: createdAt ?? this.createdAt,
+      isCompleted: isCompleted ?? this.isCompleted,
+      completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
+    );
   }
 
   int get daysSinceSowing {

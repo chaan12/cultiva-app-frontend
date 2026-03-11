@@ -1,6 +1,5 @@
-Coloca aqui las fichas tecnicas en PDF.
+# Archivos PDF de Cultivos
 
-Nombres esperados actualmente:
 - maiz_ficha_tecnica.pdf
 - tomate_ficha_tecnica.pdf
 - sorgo_ficha_tecnica.pdf

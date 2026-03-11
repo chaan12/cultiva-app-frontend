@@ -32,28 +32,61 @@ class AppStore extends ChangeNotifier {
   Future<void>? _initializationFuture;
 
   AppSettings get settings => _settings;
-  List<CropRecord> get crops => List<CropRecord>.unmodifiable(_crops);
+  List<CropRecord> get crops =>
+      List<CropRecord>.unmodifiable(_crops.where((crop) => !crop.isCompleted));
+  List<CropRecord> get cropHistory {
+    final history = _crops.where((crop) => crop.isCompleted).toList()
+      ..sort((a, b) {
+        final dateA = a.completedAt ?? a.createdAt;
+        final dateB = b.completedAt ?? b.createdAt;
+        return dateB.compareTo(dateA);
+      });
+    return List<CropRecord>.unmodifiable(history);
+  }
+
   WeatherSnapshot? get weather => _weather;
   bool get initialized => _initialized;
   bool get isBusy => _isBusy;
 
-  int get activeCropsCount => _crops.length;
+  int get activeCropsCount => crops.length;
 
   double get totalHectares =>
-      _crops.fold<double>(0, (sum, crop) => sum + crop.areaHa);
+      crops.fold<double>(0, (sum, crop) => sum + crop.areaHa);
 
-  int get upcomingEventsCount => _crops
-      .where(
-        (crop) => CropTrackingService.buildSummary(crop).status != 'normal',
-      )
-      .length;
+  int get upcomingEventsCount => crops.fold<int>(
+    0,
+    (sum, crop) =>
+        sum +
+        CropTrackingService.buildPlan(crop).upcomingEvents.where((event) {
+          return !event.completed && event.daysUntil >= 0;
+        }).length,
+  );
 
   CropRecord? get nextHarvestCrop {
-    if (_crops.isEmpty) {
+    if (crops.isEmpty) {
       return null;
     }
-    final sorted = [..._crops]
+    final sorted = [...crops]
       ..sort((a, b) => a.daysToHarvest.compareTo(b.daysToHarvest));
+    return sorted.first;
+  }
+
+  CropRecord? get nextPendingEventCrop {
+    if (crops.isEmpty) {
+      return null;
+    }
+    final sorted = [...crops]
+      ..sort((a, b) {
+        final summaryA = CropTrackingService.buildSummary(a);
+        final summaryB = CropTrackingService.buildSummary(b);
+        final compareDays = summaryA.nextEventDays.compareTo(
+          summaryB.nextEventDays,
+        );
+        if (compareDays != 0) {
+          return compareDays;
+        }
+        return a.createdAt.compareTo(b.createdAt);
+      });
     return sorted.first;
   }
 
@@ -158,6 +191,32 @@ class AppStore extends ChangeNotifier {
   Future<void> addCrop(CropRecord crop) async {
     await initialize();
     await _databaseService.saveCrop(crop);
+    _crops = await _databaseService.loadCrops();
+    notifyListeners();
+  }
+
+  Future<void> completeCrop(String cropId) async {
+    await initialize();
+    CropRecord? crop;
+    for (final item in _crops) {
+      if (item.id == cropId) {
+        crop = item;
+        break;
+      }
+    }
+    if (crop == null) {
+      return;
+    }
+    await _databaseService.saveCrop(
+      crop.copyWith(isCompleted: true, completedAt: DateTime.now()),
+    );
+    _crops = await _databaseService.loadCrops();
+    notifyListeners();
+  }
+
+  Future<void> deleteCrop(String cropId) async {
+    await initialize();
+    await _databaseService.deleteCrop(cropId);
     _crops = await _databaseService.loadCrops();
     notifyListeners();
   }
