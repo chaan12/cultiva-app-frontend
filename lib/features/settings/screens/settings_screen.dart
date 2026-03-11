@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/models/app_location.dart';
 import '../../../shared/services/location_service.dart';
+import '../../../shared/services/location_options_service.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../widgets/settings_section_card.dart';
@@ -15,6 +17,7 @@ class ConfiguracionScreen extends StatefulWidget {
 
 class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   late final TextEditingController _locationController;
+  AppLocation? _selectedLocation;
 
   @override
   void initState() {
@@ -25,7 +28,9 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _locationController.text = AppScope.of(context).settings.locationName;
+    final locationName = AppScope.of(context).settings.locationName;
+    _locationController.text = locationName;
+    _selectedLocation = LocationOptionsService.byLabel(locationName);
   }
 
   @override
@@ -308,18 +313,39 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                 ],
                               ),
                               const SizedBox(height: 18),
-                              TextField(
-                                controller: _locationController,
-                                enabled: !settings.autoLocation,
+                              DropdownButtonFormField<AppLocation>(
+                                key: ValueKey<String>(
+                                  '${settings.autoLocation}-${_selectedLocation?.label ?? 'none'}',
+                                ),
+                                initialValue: settings.autoLocation
+                                    ? null
+                                    : _selectedLocation,
                                 decoration: InputDecoration(
                                   filled: true,
                                   fillColor: Colors.white,
-                                  hintText: 'Ej: Valladolid, Yucatán',
+                                  hintText: 'Selecciona una ubicación',
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide.none,
                                   ),
                                 ),
+                                items: LocationOptionsService.options
+                                    .map(
+                                      (option) => DropdownMenuItem<AppLocation>(
+                                        value: option,
+                                        child: Text(option.label),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: settings.autoLocation
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          _selectedLocation = value;
+                                          _locationController.text =
+                                              value?.label ?? '';
+                                        });
+                                      },
                               ),
                               const SizedBox(height: 12),
                               Row(
@@ -363,23 +389,22 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                 onPressed: settings.autoLocation || store.isBusy
                                     ? null
                                     : () {
-                                        final value = _locationController.text
-                                            .trim();
+                                        final value = _selectedLocation;
                                         debugPrint(
-                                          '[ConfiguracionScreen] Guardando ubicación manual: $value',
+                                          '[ConfiguracionScreen] Guardando ubicación manual: ${value?.label}',
                                         );
-                                        if (value.isEmpty) {
+                                        if (value == null) {
                                           showCultivaSnackBar(
                                             context,
                                             message:
-                                                'Escribe una ubicación válida.',
+                                                'Selecciona una ubicación válida.',
                                             color: Colors.redAccent,
                                             icon: Icons.warning_amber_rounded,
                                           );
                                           return;
                                         }
                                         _toggleSetting(
-                                          () => store.saveManualLocation(value),
+                                          () => store.savePresetLocation(value),
                                           'Ubicación guardada correctamente.',
                                         );
                                       },

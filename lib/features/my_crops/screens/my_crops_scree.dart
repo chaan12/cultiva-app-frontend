@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../crop_register/screens/crop_register_screen.dart';
 import '../../crop_tracking/screens/crop_tracking_screen.dart';
+import '../../crop_tracking/services/crop_tracking_service.dart';
 import '../widgets/crop_record_card.dart';
 
 class MisCultivosScreen extends StatelessWidget {
@@ -48,13 +49,14 @@ class MisCultivosScreen extends StatelessWidget {
                       itemCount: store.crops.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 16),
                       itemBuilder: (context, index) {
+                        final crop = store.crops[index];
                         return CropRecordCard(
-                          crop: store.crops[index],
+                          crop: crop,
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const CropTrackingScreen(),
+                                builder: (_) => CropTrackingScreen(crop: crop),
                               ),
                             );
                           },
@@ -80,7 +82,7 @@ class MisCultivosScreen extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              '${store.nextHarvestCrop!.name}: ${store.nextHarvestCrop!.nextEventLabel}',
+                              '${store.nextHarvestCrop!.name}: ${CropTrackingService.buildSummary(store.nextHarvestCrop!).nextEventLabel}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),

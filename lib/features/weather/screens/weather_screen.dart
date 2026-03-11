@@ -1,34 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
 
-// --- MODELOS DE DATOS ---
-class WeatherData {
-  final String dia;
-  final double valor;
-  WeatherData(this.dia, this.valor);
-}
-
-class WeatherSource {
-  final String id;
-  final String name;
-  final String description;
-  bool favorite;
-  bool active;
-  final int reliability;
-  final Map<String, String> data;
-  final List<String> alerts;
-
-  WeatherSource({
-    required this.id,
-    required this.name,
-    required this.description,
-    this.favorite = false,
-    this.active = true,
-    required this.reliability,
-    required this.data,
-    required this.alerts,
-  });
-}
+import '../../../shared/models/weather_snapshot.dart';
+import '../../../shared/state/app_scope.dart';
 
 class ClimaScreen extends StatefulWidget {
   const ClimaScreen({super.key});
@@ -38,169 +12,74 @@ class ClimaScreen extends StatefulWidget {
 }
 
 class _ClimaScreenState extends State<ClimaScreen> {
-  int currentIndex = 3; // Index 3 para "Clima"
-
-  // Datos de las gráficas
-  final List<WeatherData> temperatureData = [
-    WeatherData('Lun', 28),
-    WeatherData('Mar', 30),
-    WeatherData('Mié', 29),
-    WeatherData('Jue', 31),
-    WeatherData('Vie', 32),
-    WeatherData('Sáb', 30),
-    WeatherData('Dom', 28),
-  ];
-
-  final List<WeatherData> rainfallData = [
-    WeatherData('Lun', 5),
-    WeatherData('Mar', 12),
-    WeatherData('Mié', 8),
-    WeatherData('Jue', 18),
-    WeatherData('Vie', 22),
-    WeatherData('Sáb', 15),
-    WeatherData('Dom', 10),
-  ];
-
-  List<WeatherSource> sources = [
-    WeatherSource(
-      id: 'smn',
-      name: 'SMN México',
-      description: 'Servicio Meteorológico Nacional',
-      favorite: true,
-      reliability: 95,
-      data: {
-        'temperature': '28°C',
-        'humidity': '75%',
-        'rainProbability': '65%',
-        'windSpeed': '12 km/h',
-        'uvIndex': 'Alto',
-        'visibility': '10 km',
-      },
-      alerts: ['Lluvias intensas próximas 72h'],
-    ),
-    WeatherSource(
-      id: 'noaa',
-      name: 'NOAA',
-      description: 'National Oceanic and Atmospheric Administration',
-      favorite: true,
-      reliability: 92,
-      data: {
-        'temperature': '29°C',
-        'humidity': '73%',
-        'rainProbability': '60%',
-        'windSpeed': '15 km/h',
-        'uvIndex': 'Muy alto',
-        'visibility': '12 km',
-      },
-      alerts: ['Temporada de lluvias activa'],
-    ),
-    WeatherSource(
-      id: 'conagua',
-      name: 'CONAGUA',
-      description: 'Comisión Nacional del Agua',
-      reliability: 88,
-      data: {
-        'temperature': '28°C',
-        'humidity': '76%',
-        'rainProbability': '70%',
-        'windSpeed': '11 km/h',
-      },
-      alerts: ['Monitoreo de precipitación'],
-    ),
-    WeatherSource(
-      id: 'wunderground',
-      name: 'Weather Underground',
-      description: 'Red de estaciones meteorológicas',
-      active: false,
-      reliability: 85,
-      data: {
-        'temperature': '27°C',
-        'humidity': '74%',
-        'rainProbability': '58%',
-        'windSpeed': '13 km/h',
-        'visibility': '9 km',
-      },
-      alerts: [],
-    ),
-  ];
-
-  void toggleFavorite(String id) {
-    setState(() {
-      final index = sources.indexWhere((s) => s.id == id);
-      if (index != -1) {
-        sources[index].favorite = !sources[index].favorite;
-      }
-    });
-  }
-
-  void toggleActive(String id) {
-    setState(() {
-      final index = sources.indexWhere((s) => s.id == id);
-      if (index != -1) {
-        sources[index].active = !sources[index].active;
-      }
-    });
-  }
-
-  List<WeatherSource> get sortedSources {
-    List<WeatherSource> sorted = List.from(sources);
-
-    sorted.sort((a, b) {
-      if (a.favorite && !b.favorite) return -1;
-      if (!a.favorite && b.favorite) return 1;
-      return b.reliability.compareTo(a.reliability);
-    });
-
-    return sorted;
-  }
-
-  List<WeatherSource> get activeSources {
-    return sortedSources.where((s) => s.active).toList();
-  }
+  final Set<String> _favorites = <String>{'noaa_gfs', 'ecmwf'};
+  final Set<String> _disabled = <String>{};
 
   @override
   Widget build(BuildContext context) {
+    final store = AppScope.of(context);
+    final weather = store.weather;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF1F4E0),
-      body: SingleChildScrollView(
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: store.refreshWeather,
+        child: ListView(
           children: [
-            _buildHeader(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  _buildAlertSection(),
-                  const SizedBox(height: 20),
-                  _buildChartCard(
-                    "Temperatura (7 días)",
-                    Icons.thermostat,
-                    Colors.blue,
-                    _tempChart(),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildChartCard(
-                    "Precipitación (mm)",
-                    Icons.cloud_queue,
-                    Colors.green,
-                    _rainChart(),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSourcesList(),
-                  const SizedBox(height: 40),
-                ],
+            _buildHeader(weather, store.settings.locationName),
+            if (weather == null)
+              const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    _buildAlertSection(weather),
+                    const SizedBox(height: 20),
+                    _buildChartCard(
+                      'Temperatura NOAA GFS (24h)',
+                      Icons.thermostat,
+                      Colors.blue,
+                      _temperatureChart(weather.hourly),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildChartCard(
+                      'Precipitación NOAA GFS (24h)',
+                      Icons.grain,
+                      Colors.green,
+                      _rainChart(weather.hourly),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildChartCard(
+                      'Humedad relativa (24h)',
+                      Icons.water_drop_outlined,
+                      Colors.teal,
+                      _humidityChart(weather.hourly),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildChartCard(
+                      'Viento y UV (24h)',
+                      Icons.air,
+                      Colors.deepOrange,
+                      _windUvChart(weather.hourly),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSourcesList(weather),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  // --- WIDGETS DE LA INTERFAZ ---
-
-  Widget _buildHeader() {
+  Widget _buildHeader(WeatherSnapshot? weather, String fallbackLocation) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
@@ -210,38 +89,31 @@ class _ClimaScreenState extends State<ClimaScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.chevron_left, color: Colors.white, size: 32),
-          ),
           const Text(
-            "Clima Premium",
+            'Clima Premium',
             style: TextStyle(
               color: Colors.white,
               fontSize: 32,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const Text(
-            "Dashboard meteorológico profesional",
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+          Text(
+            weather?.locationLabel ?? fallbackLocation,
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 25),
-          _buildMainWeatherCard(),
+          if (weather != null) _buildMainWeatherCard(weather),
         ],
       ),
     );
   }
 
-  Widget _buildMainWeatherCard() {
+  Widget _buildMainWeatherCard(WeatherSnapshot weather) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -256,22 +128,22 @@ class _ClimaScreenState extends State<ClimaScreen> {
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    "Condiciones actuales",
-                    style: TextStyle(color: Colors.white70),
+                    'Fuente principal: ${weather.primarySourceName}',
+                    style: const TextStyle(color: Colors.white70),
                   ),
                   Text(
-                    "28°C",
-                    style: TextStyle(
+                    '${weather.temperatureC.toStringAsFixed(1)}°C',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    "Parcialmente nublado",
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                    weather.description,
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
                   ),
                 ],
               ),
@@ -282,9 +154,42 @@ class _ClimaScreenState extends State<ClimaScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _headerInfo(Icons.air, "12 km/h", "Viento"),
-              _headerInfo(Icons.water_drop_outlined, "75%", "Humedad"),
-              _headerInfo(Icons.umbrella_outlined, "65%", "Lluvia"),
+              _headerInfo(
+                Icons.air,
+                '${weather.windSpeedKmh.toStringAsFixed(1)} km/h',
+                'Viento',
+              ),
+              _headerInfo(
+                Icons.water_drop_outlined,
+                '${weather.humidity}%',
+                'Humedad',
+              ),
+              _headerInfo(
+                Icons.remove_red_eye,
+                '${weather.visibilityKm.toStringAsFixed(1)} km',
+                'Visibilidad',
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _headerInfo(
+                Icons.umbrella_outlined,
+                '${weather.rainProbability}%',
+                'Lluvia',
+              ),
+              _headerInfo(
+                Icons.sunny,
+                weather.uvIndex.toStringAsFixed(1),
+                'UV',
+              ),
+              _headerInfo(
+                Icons.compress,
+                '${weather.pressureHpa.toStringAsFixed(0)} hPa',
+                'Presión',
+              ),
             ],
           ),
         ],
@@ -311,56 +216,52 @@ class _ClimaScreenState extends State<ClimaScreen> {
     );
   }
 
-  Widget _buildAlertSection() {
+  Widget _buildAlertSection(WeatherSnapshot weather) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: const [
+        const Row(
+          children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange),
             SizedBox(width: 8),
             Text(
-              "Alertas activas",
+              'Alertas activas',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF3E0),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.orangeAccent),
-          ),
-          child: Row(
-            children: [
-              const CircleAvatar(
-                backgroundColor: Colors.orange,
-                child: Icon(Icons.priority_high, color: Colors.white),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      "Lluvias intensas",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFE65100),
-                      ),
+        ...weather.alerts
+            .take(2)
+            .map(
+              (alert) => Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.orangeAccent),
+                ),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Colors.orange,
+                      child: Icon(Icons.priority_high, color: Colors.white),
                     ),
-                    Text(
-                      "Próximos 3 días - Acumulado: 40-60mm",
-                      style: TextStyle(color: Color(0xFFE65100), fontSize: 13),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Text(
+                        alert,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE65100),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
       ],
     );
   }
@@ -406,7 +307,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  "7 DÍAS",
+                  '24H',
                   style: TextStyle(
                     color: color,
                     fontSize: 10,
@@ -417,15 +318,13 @@ class _ClimaScreenState extends State<ClimaScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          SizedBox(height: 200, child: chart),
+          SizedBox(height: 220, child: chart),
         ],
       ),
     );
   }
 
-  // --- LÓGICA DE GRÁFICAS (FL_CHART) ---
-
-  Widget _tempChart() {
+  Widget _temperatureChart(List<HourlyWeatherPoint> points) {
     return LineChart(
       LineChartData(
         gridData: FlGridData(
@@ -434,19 +333,22 @@ class _ClimaScreenState extends State<ClimaScreen> {
           getDrawingHorizontalLine: (value) =>
               FlLine(color: Colors.black12, strokeWidth: 1),
         ),
-        titlesData: _titlesData(),
+        titlesData: _titlesData(points),
         borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(
-            spots: temperatureData
+            spots: points
                 .asMap()
                 .entries
-                .map((e) => FlSpot(e.key.toDouble(), e.value.valor))
+                .map(
+                  (entry) =>
+                      FlSpot(entry.key.toDouble(), entry.value.temperatureC),
+                )
                 .toList(),
             isCurved: true,
             color: Colors.blue,
             barWidth: 4,
-            dotData: FlDotData(show: true),
+            dotData: FlDotData(show: false),
             belowBarData: BarAreaData(
               show: true,
               color: Colors.blue.withValues(alpha: 0.1),
@@ -457,24 +359,71 @@ class _ClimaScreenState extends State<ClimaScreen> {
     );
   }
 
-  Widget _rainChart() {
+  Widget _rainChart(List<HourlyWeatherPoint> points) {
+    final maxRain = points.fold<double>(
+      0,
+      (current, point) =>
+          point.precipitationMm > current ? point.precipitationMm : current,
+    );
+    if (maxRain <= 0) {
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7FAF3),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.green.withValues(alpha: 0.12)),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.water_drop_outlined, color: Colors.green, size: 34),
+              SizedBox(height: 10),
+              Text(
+                'Sin lluvia prevista en las próximas 24 horas',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF2E7D32),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return BarChart(
       BarChartData(
-        gridData: FlGridData(show: false),
-        titlesData: _titlesData(),
+        maxY: maxRain < 1 ? 1 : maxRain * 1.35,
+        alignment: BarChartAlignment.spaceAround,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.green.withValues(alpha: 0.12),
+            strokeWidth: 1,
+          ),
+        ),
+        titlesData: _titlesData(points, showLeftTitles: true),
         borderData: FlBorderData(show: false),
-        barGroups: rainfallData
+        barGroups: points
             .asMap()
             .entries
             .map(
-              (e) => BarChartGroupData(
-                x: e.key,
+              (entry) => BarChartGroupData(
+                x: entry.key,
                 barRods: [
                   BarChartRodData(
-                    toY: e.value.valor,
-                    color: Colors.green,
-                    width: 16,
-                    borderRadius: BorderRadius.circular(4),
+                    toY: entry.value.precipitationMm,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF7BD389), Color(0xFF2E7D32)],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                    ),
+                    width: 12,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(8),
+                    ),
                   ),
                 ],
               ),
@@ -484,17 +433,130 @@ class _ClimaScreenState extends State<ClimaScreen> {
     );
   }
 
-  FlTitlesData _titlesData() {
+  Widget _humidityChart(List<HourlyWeatherPoint> points) {
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(show: true, drawVerticalLine: false),
+        titlesData: _titlesData(points),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: points
+                .asMap()
+                .entries
+                .map(
+                  (entry) => FlSpot(
+                    entry.key.toDouble(),
+                    entry.value.humidity.toDouble(),
+                  ),
+                )
+                .toList(),
+            isCurved: true,
+            color: Colors.teal,
+            barWidth: 3,
+            dotData: FlDotData(show: false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _windUvChart(List<HourlyWeatherPoint> points) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            _ChartLegendDot(color: Colors.deepOrange, label: 'Viento'),
+            SizedBox(width: 16),
+            _ChartLegendDot(color: Colors.amber, label: 'UV'),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: LineChart(
+            LineChartData(
+              gridData: FlGridData(show: true, drawVerticalLine: false),
+              titlesData: _titlesData(points),
+              borderData: FlBorderData(show: false),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: points
+                      .asMap()
+                      .entries
+                      .map(
+                        (entry) => FlSpot(
+                          entry.key.toDouble(),
+                          entry.value.windSpeedKmh,
+                        ),
+                      )
+                      .toList(),
+                  isCurved: true,
+                  color: Colors.deepOrange,
+                  barWidth: 3,
+                  dotData: FlDotData(show: false),
+                ),
+                LineChartBarData(
+                  spots: points
+                      .asMap()
+                      .entries
+                      .map(
+                        (entry) => FlSpot(
+                          entry.key.toDouble(),
+                          entry.value.uvIndex * 4,
+                        ),
+                      )
+                      .toList(),
+                  isCurved: true,
+                  color: Colors.amber,
+                  barWidth: 2,
+                  dotData: FlDotData(show: false),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  FlTitlesData _titlesData(
+    List<HourlyWeatherPoint> points, {
+    bool showLeftTitles = false,
+  }) {
     return FlTitlesData(
-      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      leftTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: showLeftTitles,
+          reservedSize: showLeftTitles ? 34 : 0,
+          interval: showLeftTitles ? 0.5 : null,
+          getTitlesWidget: (value, meta) {
+            if (!showLeftTitles) {
+              return const SizedBox.shrink();
+            }
+            return Text(
+              value.toStringAsFixed(value >= 1 ? 0 : 1),
+              style: const TextStyle(color: Colors.grey, fontSize: 10),
+            );
+          },
+        ),
+      ),
       topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
+          reservedSize: 26,
+          interval: 6,
           getTitlesWidget: (value, meta) {
-            final days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            final index = value.toInt();
+            if (index < 0 ||
+                index >= points.length ||
+                value != index.toDouble()) {
+              return const SizedBox.shrink();
+            }
             return Text(
-              days[value.toInt() % 7],
+              points[index].label,
               style: const TextStyle(color: Colors.grey, fontSize: 10),
             );
           },
@@ -503,14 +565,31 @@ class _ClimaScreenState extends State<ClimaScreen> {
     );
   }
 
-  Widget _buildSourcesList() {
+  Widget _buildSourcesList(WeatherSnapshot weather) {
+    final sources = [...weather.providers]
+      ..sort((a, b) {
+        final aDisabled = _disabled.contains(a.id);
+        final bDisabled = _disabled.contains(b.id);
+        if (aDisabled != bDisabled) {
+          return aDisabled ? 1 : -1;
+        }
+        final aFav = _favorites.contains(a.id);
+        final bFav = _favorites.contains(b.id);
+        if (aFav && !bFav) return -1;
+        if (!aFav && bFav) return 1;
+        return b.reliability.compareTo(a.reliability);
+      });
+    final activeCount = sources
+        .where((provider) => !_disabled.contains(provider.id))
+        .length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             const Text(
-              "Fuentes meteorológicas",
+              'Fuentes meteorológicas',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             const SizedBox(width: 10),
@@ -521,7 +600,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                "${activeSources.length} activas",
+                '$activeCount activas',
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -531,18 +610,62 @@ class _ClimaScreenState extends State<ClimaScreen> {
           ],
         ),
         const SizedBox(height: 15),
-        ...sortedSources.map((s) => _sourceCard(s)),
+        ...sources.map(_sourceCard),
       ],
     );
   }
 
-  Widget _sourceCard(WeatherSource source) {
+  Widget _sourceCard(WeatherProviderSnapshot source) {
+    if (_disabled.contains(source.id)) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    source.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Fuente desactivada',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _disabled.remove(source.id);
+                });
+              },
+              icon: const Icon(Icons.restart_alt),
+              label: const Text('Activar'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: source.favorite
+        border: _favorites.contains(source.id)
             ? Border.all(color: Colors.amber, width: 2)
             : Border.all(color: Colors.grey.shade200),
       ),
@@ -551,7 +674,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: source.favorite
+              color: _favorites.contains(source.id)
                   ? Colors.amber.withValues(alpha: 0.08)
                   : Colors.grey.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.vertical(
@@ -584,9 +707,19 @@ class _ClimaScreenState extends State<ClimaScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => toggleFavorite(source.id),
+                      onPressed: () {
+                        setState(() {
+                          if (_favorites.contains(source.id)) {
+                            _favorites.remove(source.id);
+                          } else {
+                            _favorites.add(source.id);
+                          }
+                        });
+                      },
                       icon: Icon(
-                        source.favorite ? Icons.star : Icons.star_border,
+                        _favorites.contains(source.id)
+                            ? Icons.star
+                            : Icons.star_border,
                         color: Colors.amber,
                       ),
                     ),
@@ -612,7 +745,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      "${source.reliability}% confiable",
+                      '${source.reliability}% confiable',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -623,88 +756,58 @@ class _ClimaScreenState extends State<ClimaScreen> {
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(16),
-            child: GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 0.9,
-              children: source.data.entries.map((e) {
-                IconData icon = Icons.info;
-                Color color = Colors.blue;
-                String label = e.key;
-
-                switch (e.key) {
-                  case 'temperature':
-                    icon = Icons.thermostat;
-                    color = Colors.blue;
-                    label = "Temp";
-                    break;
-                  case 'humidity':
-                    icon = Icons.water_drop;
-                    color = Colors.green;
-                    label = "Humedad";
-                    break;
-                  case 'rainProbability':
-                    icon = Icons.grain;
-                    color = Colors.blue;
-                    label = "Lluvia";
-                    break;
-                  case 'windSpeed':
-                    icon = Icons.air;
-                    color = Colors.teal;
-                    label = "Viento";
-                    break;
-                  case 'uvIndex':
-                    icon = Icons.wb_sunny;
-                    color = Colors.deepOrange;
-                    label = "UV";
-                    break;
-                  case 'visibility':
-                    icon = Icons.remove_red_eye;
-                    color = Colors.green;
-                    label = "Visib.";
-                    break;
-                }
-
-                return Container(
-                  margin: const EdgeInsets.all(6),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: color.withValues(alpha: 0.35)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(icon, size: 22, color: color),
-                      const SizedBox(height: 6),
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
+            child: source.available
+                ? GridView.count(
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    childAspectRatio: 0.9,
+                    children: source.data.entries.map((entry) {
+                      final meta = _metricMeta(entry.key);
+                      return Container(
+                        margin: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: meta.color.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: meta.color.withValues(alpha: 0.35),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        e.value,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: color,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(meta.icon, size: 22, color: meta.color),
+                            const SizedBox(height: 6),
+                            Text(
+                              meta.label,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              entry.value,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: meta.color,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      );
+                    }).toList(),
+                  )
+                : const Text(
+                    'Esta fuente no tiene cobertura disponible para la ubicación seleccionada.',
+                    style: TextStyle(color: Colors.grey),
                   ),
-                );
-              }).toList(),
-            ),
           ),
-
           if (source.alerts.isNotEmpty)
             Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -734,7 +837,6 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 }).toList(),
               ),
             ),
-
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
@@ -747,12 +849,22 @@ class _ClimaScreenState extends State<ClimaScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  source.active ? "Fuente activa" : "Fuente desactivada",
+                  _disabled.contains(source.id)
+                      ? 'Fuente desactivada'
+                      : 'Fuente activa',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Switch(
-                  value: source.active,
-                  onChanged: (_) => toggleActive(source.id),
+                  value: !_disabled.contains(source.id),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value) {
+                        _disabled.remove(source.id);
+                      } else {
+                        _disabled.add(source.id);
+                      }
+                    });
+                  },
                   activeThumbColor: Colors.blue,
                   activeTrackColor: Colors.blue.withValues(alpha: 0.35),
                 ),
@@ -763,4 +875,65 @@ class _ClimaScreenState extends State<ClimaScreen> {
       ),
     );
   }
+
+  _MetricMeta _metricMeta(String key) {
+    switch (key) {
+      case 'temperature':
+        return const _MetricMeta(Icons.thermostat, Colors.blue, 'Temp');
+      case 'humidity':
+        return const _MetricMeta(Icons.water_drop, Colors.green, 'Humedad');
+      case 'rainProbability':
+        return const _MetricMeta(Icons.grain, Colors.blue, 'Lluvia');
+      case 'windSpeed':
+        return const _MetricMeta(Icons.air, Colors.teal, 'Viento');
+      case 'uvIndex':
+        return const _MetricMeta(Icons.wb_sunny, Colors.deepOrange, 'UV');
+      case 'visibility':
+        return const _MetricMeta(Icons.remove_red_eye, Colors.indigo, 'Visib.');
+      case 'pressure':
+        return const _MetricMeta(Icons.speed, Colors.purple, 'Presión');
+      case 'cloudCover':
+        return const _MetricMeta(Icons.cloud, Colors.blueGrey, 'Nubes');
+      default:
+        return const _MetricMeta(Icons.info, Colors.grey, 'Dato');
+    }
+  }
+}
+
+class _ChartLegendDot extends StatelessWidget {
+  const _ChartLegendDot({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricMeta {
+  const _MetricMeta(this.icon, this.color, this.label);
+
+  final IconData icon;
+  final Color color;
+  final String label;
 }

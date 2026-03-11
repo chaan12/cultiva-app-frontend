@@ -12,7 +12,9 @@ import '../widgets/crop_option_card.dart';
 import '../widgets/register_field_card.dart';
 
 class CropRegisterScreen extends StatefulWidget {
-  const CropRegisterScreen({super.key});
+  const CropRegisterScreen({super.key, this.initialCropId});
+
+  final String? initialCropId;
 
   @override
   State<CropRegisterScreen> createState() => _CropRegisterScreenState();
@@ -34,6 +36,11 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
     final location = AppScope.of(context).settings.locationName;
     if (_locationController.text.isEmpty) {
       _locationController.text = location;
+    }
+    if (_selectedCrop == null && widget.initialCropId != null) {
+      final preset = CropCatalogService.byId(widget.initialCropId!);
+      _selectedCrop = preset;
+      _step = 2;
     }
   }
 

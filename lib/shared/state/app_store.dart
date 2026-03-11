@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../features/crops_catalog/models/crop_catalog_item.dart';
 import '../../features/crops_catalog/services/crop_catalog_service.dart';
+import '../../features/crop_tracking/services/crop_tracking_service.dart';
+import '../models/app_location.dart';
 import '../models/app_settings.dart';
 import '../models/crop_record.dart';
 import '../models/weather_snapshot.dart';
@@ -40,8 +42,11 @@ class AppStore extends ChangeNotifier {
   double get totalHectares =>
       _crops.fold<double>(0, (sum, crop) => sum + crop.areaHa);
 
-  int get upcomingEventsCount =>
-      _crops.where((crop) => crop.status != 'normal').length;
+  int get upcomingEventsCount => _crops
+      .where(
+        (crop) => CropTrackingService.buildSummary(crop).status != 'normal',
+      )
+      .length;
 
   CropRecord? get nextHarvestCrop {
     if (_crops.isEmpty) {
@@ -61,13 +66,33 @@ class AppStore extends ChangeNotifier {
   }
 
   CropCatalogItem get recommendedCropItem {
-    for (final item in CropCatalogService.items) {
-      if (item.season.contains('Todo el año') ||
-          item.season.contains(currentSeason.split(' - ').first)) {
-        return item;
-      }
-    }
-    return CropCatalogService.items.first;
+    return recommendedCropItems.first;
+  }
+
+  List<CropCatalogItem> get recommendedCropItems {
+    final month = DateTime.now().month;
+    final currentSeasonParts = currentSeason
+        .split(' - ')
+        .map((part) => part.trim().toLowerCase())
+        .toList();
+    final ranked = [...CropCatalogService.items]
+      ..sort((a, b) {
+        final scoreA = _recommendationScore(
+          item: a,
+          month: month,
+          currentSeasonParts: currentSeasonParts,
+        );
+        final scoreB = _recommendationScore(
+          item: b,
+          month: month,
+          currentSeasonParts: currentSeasonParts,
+        );
+        if (scoreA != scoreB) {
+          return scoreB.compareTo(scoreA);
+        }
+        return a.cycleDays.compareTo(b.cycleDays);
+      });
+    return ranked;
   }
 
   Future<void> initialize() async {
@@ -195,6 +220,28 @@ class AppStore extends ChangeNotifier {
     }
   }
 
+  Future<void> savePresetLocation(AppLocation location) async {
+    await initialize();
+    _setBusy(true);
+    try {
+      debugPrint('[AppStore] savePresetLocation(${location.label})');
+      _settings = _settings.copyWith(
+        autoLocation: false,
+        locationName: location.label,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      );
+      await _databaseService.saveSettings(_settings);
+      debugPrint(
+        '[AppStore] Ubicación predefinida guardada: ${location.label} (${location.latitude}, ${location.longitude})',
+      );
+      await _refreshWeatherInternal();
+    } finally {
+      _setBusy(false);
+      notifyListeners();
+    }
+  }
+
   Future<void> refreshWeather() async {
     await initialize();
     await _refreshWeatherInternal();
@@ -226,5 +273,58 @@ class AppStore extends ChangeNotifier {
     if (hasListeners) {
       notifyListeners();
     }
+  }
+
+  int _recommendationScore({
+    required CropCatalogItem item,
+    required int month,
+    required List<String> currentSeasonParts,
+  }) {
+    final season = item.season.toLowerCase();
+    final sowingWindow = item.sowingWindow.toLowerCase();
+    var score = 0;
+
+    if (season.contains('todo el año') ||
+        sowingWindow.contains('todo el año')) {
+      score += 40;
+    }
+    if (_windowContainsMonth(sowingWindow, month)) {
+      score += 70;
+    }
+    if (currentSeasonParts.every(season.contains)) {
+      score += 50;
+    } else {
+      for (final part in currentSeasonParts) {
+        if (season.contains(part)) {
+          score += 20;
+        }
+      }
+    }
+    score += (160 - item.cycleDays).clamp(0, 60);
+    return score;
+  }
+
+  bool _windowContainsMonth(String window, int month) {
+    final monthNames = <String, int>{
+      'enero': 1,
+      'febrero': 2,
+      'marzo': 3,
+      'abril': 4,
+      'mayo': 5,
+      'junio': 6,
+      'julio': 7,
+      'agosto': 8,
+      'septiembre': 9,
+      'setiembre': 9,
+      'octubre': 10,
+      'noviembre': 11,
+      'diciembre': 12,
+    };
+    for (final entry in monthNames.entries) {
+      if (window.contains(entry.key) && entry.value == month) {
+        return true;
+      }
+    }
+    return false;
   }
 }

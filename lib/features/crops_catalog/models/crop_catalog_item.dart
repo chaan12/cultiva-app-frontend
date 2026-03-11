@@ -16,6 +16,14 @@ class CropCatalogItem {
     required this.gradientColors,
     required this.badgeColor,
     required this.icon,
+    required this.pdfAssetPath,
+    required this.idealTemperature,
+    required this.waterRequirement,
+    required this.soilType,
+    required this.soilPh,
+    required this.plantingDensity,
+    required this.expectedYield,
+    required this.sunExposure,
   });
 
   final String id;
@@ -32,4 +40,12 @@ class CropCatalogItem {
   final List<Color> gradientColors;
   final Color badgeColor;
   final IconData icon;
+  final String pdfAssetPath;
+  final String idealTemperature;
+  final String waterRequirement;
+  final String soilType;
+  final String soilPh;
+  final String plantingDensity;
+  final String expectedYield;
+  final String sunExposure;
 }

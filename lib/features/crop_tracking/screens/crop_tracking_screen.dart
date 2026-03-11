@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/models/crop_record.dart';
+import '../models/crop_tracking_models.dart';
+import '../services/crop_tracking_service.dart';
+
 class CropTrackingScreen extends StatefulWidget {
-  const CropTrackingScreen({super.key});
+  const CropTrackingScreen({super.key, required this.crop});
+
+  final CropRecord crop;
 
   @override
   State<CropTrackingScreen> createState() => _CropTrackingScreenState();
@@ -9,100 +15,20 @@ class CropTrackingScreen extends StatefulWidget {
 
 class _CropTrackingScreenState extends State<CropTrackingScreen> {
   bool notifications = true;
-  String activeTab =
-      "timeline"; // Por defecto en timeline para visualizar los cambios
+  String activeTab = 'timeline';
 
-  final Map<String, dynamic> cultivo = {
-    "nombre": "Maíz",
-    "area": "2.5 ha",
-    "diasDesdeSiembra": 23,
-    "etapaActual": "Crecimiento vegetativo",
-    "progreso": 19,
-    "totalDias": 120,
-    "diasCosecha": 97,
-  };
-
-  final List<Map<String, dynamic>> upcomingEvents = [
-    {
-      "task": "Aplicar fertilizante NPK",
-      "date": "10 Mayo",
-      "daysUntil": 2,
-      "priority": "high",
-      "icon": Icons.water_drop,
-      "description": "Fase crítica de nutrición",
-    },
-    {
-      "task": "Inspección de plagas",
-      "date": "12 Mayo",
-      "daysUntil": 4,
-      "priority": "medium",
-      "icon": Icons.bug_report,
-      "description": "Monitoreo preventivo",
-    },
-    {
-      "task": "Riego profundo",
-      "date": "14 Mayo",
-      "daysUntil": 6,
-      "priority": "medium",
-      "icon": Icons.water_drop,
-      "description": "Mantener humedad del suelo",
-    },
-  ];
-
-  final List<Map<String, dynamic>> timelineStages = [
-    {
-      "name": "Siembra",
-      "date": "15 Abril 2026",
-      "description": "Plantación inicial",
-      "completed": true,
-      "icon": Icons.eco,
-    },
-    {
-      "name": "Germinación",
-      "date": "22 Abril 2026",
-      "description": "Primeras plántulas visibles",
-      "completed": true,
-      "icon": Icons.eco_outlined,
-    },
-    {
-      "name": "Crecimiento vegetativo",
-      "date": "5 Mayo 2026",
-      "description": "Desarrollo de hojas y tallos",
-      "current": true,
-      "daysRemaining": 7,
-      "icon": Icons.trending_up,
-    },
-    {
-      "name": "Floración",
-      "date": "25 Mayo 2026",
-      "description": "Aparición de flores",
-      "completed": false,
-      "icon": Icons.wb_sunny_outlined,
-    },
-    {
-      "name": "Fructificación",
-      "date": "10 Junio 2026",
-      "description": "Formación de frutos",
-      "completed": false,
-      "icon": Icons.spa_outlined,
-    },
-    {
-      "name": "Cosecha",
-      "date": "15 Julio 2026",
-      "description": "Momento óptimo de recolección",
-      "completed": false,
-      "icon": Icons.check_circle_outline,
-    },
-  ];
+  CropTrackingPlan get _plan => CropTrackingService.buildPlan(widget.crop);
 
   @override
   Widget build(BuildContext context) {
+    final plan = _plan;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4E0), // Fondo crema de la imagen
+      backgroundColor: const Color(0xFFF1F4E0),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(),
+            _buildHeader(plan),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
@@ -114,9 +40,9 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                   const SizedBox(height: 20),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
-                    child: activeTab == "events"
-                        ? _buildEventsList()
-                        : _buildTimeline(),
+                    child: activeTab == 'events'
+                        ? _buildEventsList(plan.upcomingEvents)
+                        : _buildTimeline(plan.timelineStages),
                   ),
                   const SizedBox(height: 40),
                 ],
@@ -128,16 +54,13 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(CropTrackingPlan plan) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
       decoration: const BoxDecoration(
         color: Color(0xFF0D5D33),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,7 +73,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            cultivo["nombre"],
+            widget.crop.name,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 32,
@@ -158,7 +81,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
             ),
           ),
           Text(
-            "${cultivo["area"]} • Día ${cultivo["diasDesdeSiembra"]}/${cultivo["totalDias"]}",
+            '${widget.crop.formattedArea} • Día ${widget.crop.daysSinceSowing}/${widget.crop.cycleDays}',
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 25),
@@ -174,15 +97,17 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      cultivo["etapaActual"],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        plan.currentStage,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     Text(
-                      "${cultivo["progreso"]}%",
+                      '${plan.progress}%',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -195,7 +120,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
-                    value: cultivo["progreso"] / 100,
+                    value: plan.progress / 100,
                     backgroundColor: Colors.white24,
                     color: Colors.white,
                     minHeight: 10,
@@ -205,7 +130,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "${cultivo["diasCosecha"]} días hasta cosecha estimada",
+                    '${plan.daysToHarvest} días hasta cosecha estimada',
                     style: const TextStyle(color: Colors.white, fontSize: 13),
                   ),
                 ),
@@ -244,11 +169,11 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Notificaciones",
+                  'Notificaciones',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  notifications ? "Alertas activas" : "Alertas desactivadas",
+                  notifications ? 'Alertas activas' : 'Alertas desactivadas',
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
@@ -256,7 +181,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
           ),
           Switch.adaptive(
             value: notifications,
-            onChanged: (v) => setState(() => notifications = v),
+            onChanged: (value) => setState(() => notifications = value),
             activeThumbColor: const Color(0xFF00C853),
             activeTrackColor: const Color(0xFF00C853).withValues(alpha: 0.35),
           ),
@@ -274,15 +199,15 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
       ),
       child: Row(
         children: [
-          _tabButton("events", Icons.bolt, "Eventos"),
-          _tabButton("timeline", Icons.auto_graph, "Ciclo"),
+          _tabButton('events', Icons.bolt, 'Eventos'),
+          _tabButton('timeline', Icons.auto_graph, 'Ciclo'),
         ],
       ),
     );
   }
 
   Widget _tabButton(String id, IconData icon, String label) {
-    bool isSelected = activeTab == id;
+    final isSelected = activeTab == id;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => activeTab = id),
@@ -316,15 +241,15 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
     );
   }
 
-  Widget _buildEventsList() {
+  Widget _buildEventsList(List<CropUpcomingEvent> events) {
     return Column(
-      key: const ValueKey("events_list"),
-      children: upcomingEvents.map((event) => _eventCard(event)).toList(),
+      key: const ValueKey('events_list'),
+      children: events.map(_eventCard).toList(),
     );
   }
 
-  Widget _eventCard(Map<String, dynamic> event) {
-    Color priorityColor = event["priority"] == "high"
+  Widget _eventCard(CropUpcomingEvent event) {
+    final priorityColor = event.priority == 'high'
         ? Colors.redAccent
         : Colors.amber[700]!;
     return Container(
@@ -348,7 +273,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                 color: priorityColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(event["icon"], color: priorityColor),
+              child: Icon(event.icon, color: priorityColor),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -356,19 +281,21 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    event["task"],
+                    event.task,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),
                   ),
                   Text(
-                    event["description"],
+                    event.description,
                     style: const TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    "En ${event["daysUntil"]} días",
+                    event.daysUntil <= 0
+                        ? 'Programado para hoy'
+                        : 'En ${event.daysUntil} días • ${event.date}',
                     style: TextStyle(
                       color: priorityColor,
                       fontWeight: FontWeight.bold,
@@ -383,9 +310,9 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
     );
   }
 
-  Widget _buildTimeline() {
+  Widget _buildTimeline(List<CropTimelineStage> stages) {
     return Container(
-      key: const ValueKey("timeline_view"),
+      key: const ValueKey('timeline_view'),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -395,38 +322,36 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Línea de tiempo del cultivo",
+            'Línea de tiempo del cultivo',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Color(0xFF0D5D33),
             ),
           ),
+          const SizedBox(height: 12),
+          const Text(
+            'Etapas fenológicas calculadas con base en los días transcurridos del cultivo.',
+            style: TextStyle(color: Colors.grey, height: 1.4),
+          ),
           const SizedBox(height: 25),
-          ...timelineStages.asMap().entries.map(
-            (entry) => _timelineItem(
-              entry.value,
-              entry.key == timelineStages.length - 1,
-            ),
+          ...stages.asMap().entries.map(
+            (entry) =>
+                _timelineItem(entry.value, entry.key == stages.length - 1),
           ),
         ],
       ),
     );
   }
 
-  Widget _timelineItem(Map<String, dynamic> stage, bool isLast) {
-    bool isCompleted = stage["completed"] ?? false;
-    bool isCurrent = stage["current"] ?? false;
-
-    // Colores exactos de la imagen
-    Color iconBgColor = isCompleted
-        ? const Color(0xFF7CB342) // Verde claro para completados
-        : (isCurrent
-              ? const Color(0xFF33691E)
-              : Colors.white); // Verde oscuro para actual
-
-    Color iconColor = isCurrent || isCompleted ? Colors.white : Colors.grey;
-    Color connectorColor = isCompleted
+  Widget _timelineItem(CropTimelineStage stage, bool isLast) {
+    final isCompleted = stage.completed;
+    final isCurrent = stage.current;
+    final iconBgColor = isCompleted
+        ? const Color(0xFF7CB342)
+        : (isCurrent ? const Color(0xFF33691E) : Colors.white);
+    final iconColor = isCurrent || isCompleted ? Colors.white : Colors.grey;
+    final connectorColor = isCompleted
         ? const Color(0xFF7CB342)
         : Colors.grey.shade200;
 
@@ -446,7 +371,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                       ? Border.all(color: Colors.grey.shade200)
                       : null,
                   boxShadow: isCurrent
-                      ? [
+                      ? const [
                           BoxShadow(
                             color: Colors.black12,
                             blurRadius: 10,
@@ -455,7 +380,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                         ]
                       : null,
                 ),
-                child: Icon(stage["icon"], color: iconColor, size: 24),
+                child: Icon(stage.icon, color: iconColor, size: 24),
               ),
               if (!isLast)
                 Expanded(
@@ -472,77 +397,73 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      stage["name"],
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isCurrent || isCompleted
-                            ? const Color(0xFF2E7D32)
-                            : Colors.black54,
-                      ),
-                    ),
-                    if (isCurrent && stage["daysRemaining"] != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF2D4B2D,
-                          ), // Color oscuro para el badge
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              "${stage["daysRemaining"]}",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const Text(
-                              "días",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          stage.name,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isCurrent || isCompleted
+                                ? const Color(0xFF2E7D32)
+                                : Colors.black54,
+                          ),
                         ),
                       ),
-                  ],
-                ),
-                Text(
-                  stage["description"] ?? "",
-                  style: const TextStyle(color: Colors.black54, fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today_outlined,
-                      size: 14,
-                      color: Colors.grey,
+                      if (isCurrent && stage.daysRemaining != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2D4B2D),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                '${stage.daysRemaining}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const Text(
+                                'días',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    stage.date,
+                    style: const TextStyle(
+                      color: Color(0xFF0D5D33),
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      stage["date"],
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30), // Espacio entre items
-              ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    stage.description,
+                    style: const TextStyle(color: Colors.grey, height: 1.4),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

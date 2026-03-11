@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../crop_tracking/services/crop_tracking_service.dart';
 import '../../../shared/models/crop_record.dart';
 
 class CropRecordCard extends StatelessWidget {
@@ -9,7 +10,7 @@ class CropRecordCard extends StatelessWidget {
   final VoidCallback onTap;
 
   Color get _statusColor {
-    switch (crop.status) {
+    switch (CropTrackingService.buildSummary(crop).status) {
       case 'evento-proximo':
         return const Color(0xFFF59E0B);
       case 'alerta':
@@ -20,7 +21,7 @@ class CropRecordCard extends StatelessWidget {
   }
 
   String get _statusLabel {
-    switch (crop.status) {
+    switch (CropTrackingService.buildSummary(crop).status) {
       case 'evento-proximo':
         return 'EVENTO';
       case 'alerta':
@@ -32,6 +33,7 @@ class CropRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final summary = CropTrackingService.buildSummary(crop);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -106,18 +108,18 @@ class CropRecordCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      crop.currentStage,
+                      summary.currentStage,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     Text(
-                      '${crop.progress}%',
+                      '${summary.progress}%',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 LinearProgressIndicator(
-                  value: crop.progress / 100,
+                  value: summary.progress / 100,
                   backgroundColor: _statusColor.withValues(alpha: 0.1),
                   color: _statusColor,
                   minHeight: 8,
@@ -136,7 +138,7 @@ class CropRecordCard extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          crop.nextEventLabel,
+                          summary.nextEventLabel,
                           style: TextStyle(
                             color: _statusColor,
                             fontWeight: FontWeight.bold,
