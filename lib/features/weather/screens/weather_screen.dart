@@ -245,7 +245,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues( alpha: 0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white24),
       ),
@@ -377,7 +377,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues( alpha: 0.05), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+          ),
         ],
       ),
       child: Column(
@@ -399,7 +402,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withValues( alpha: 0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -446,7 +449,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: Colors.blue.withValues( alpha: 0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
             ),
           ),
         ],
@@ -514,12 +517,15 @@ class _ClimaScreenState extends State<ClimaScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.blue.withValues( alpha: 0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 "${activeSources.length} activas",
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -546,9 +552,11 @@ class _ClimaScreenState extends State<ClimaScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: source.favorite
-                  ? Colors.amber.withValues( alpha: 0.08)
-                  : Colors.grey.withValues( alpha: 0.05),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  ? Colors.amber.withValues(alpha: 0.08)
+                  : Colors.grey.withValues(alpha: 0.05),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: Column(
               children: [
@@ -597,8 +605,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
                           source.reliability >= 90
                               ? Colors.green
                               : source.reliability >= 80
-                                  ? Colors.orange
-                                  : Colors.red,
+                              ? Colors.orange
+                              : Colors.red,
                         ),
                       ),
                     ),
@@ -609,7 +617,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
-                    )
+                    ),
                   ],
                 ),
               ],
@@ -665,9 +673,9 @@ class _ClimaScreenState extends State<ClimaScreen> {
                   margin: const EdgeInsets.all(6),
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: color.withValues( alpha: 0.08),
+                    color: color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: color.withValues( alpha: 0.35)),
+                    border: Border.all(color: color.withValues(alpha: 0.35)),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -702,15 +710,18 @@ class _ClimaScreenState extends State<ClimaScreen> {
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues( alpha: 0.08),
+                color: Colors.orange.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 children: source.alerts.map((alert) {
                   return Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded,
-                          size: 16, color: Colors.orange),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        size: 16,
+                        color: Colors.orange,
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -727,9 +738,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.grey.withValues( alpha: 0.08),
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(20)),
+              color: Colors.grey.withValues(alpha: 0.08),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(20),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -741,11 +753,12 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 Switch(
                   value: source.active,
                   onChanged: (_) => toggleActive(source.id),
-                  activeColor: Colors.blue,
-                )
+                  activeThumbColor: Colors.blue,
+                  activeTrackColor: Colors.blue.withValues(alpha: 0.35),
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

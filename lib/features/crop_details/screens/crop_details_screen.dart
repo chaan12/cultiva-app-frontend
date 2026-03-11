@@ -1,126 +1,16 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../crops_catalog/services/crop_catalog_service.dart';
 
 class CropDetailsScreen extends StatelessWidget {
-  final String id;
-
   const CropDetailsScreen({super.key, required this.id});
 
-  static final Map<String, Map<String, dynamic>> cultivosData = {
-    "maiz": {
-      "nombre": "Maíz",
-      "imagen":
-          "https://images.unsplash.com/photo-1691326564837-51e3619f1d70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
-      "fechasSiembra": "Abril - Junio",
-      "fechasCosecha": "Agosto - Octubre",
-      "cicloVegetativo": "90-120 días",
-      "descripcion":
-          "Cultivo base de la agricultura maya, adaptado al clima tropical.",
-      "fertilizantes": [
-        "Nitrógeno (N): 120-150 kg/ha",
-        "Fósforo (P₂O₅): 60-80 kg/ha",
-        "Potasio (K₂O): 40-60 kg/ha",
-      ],
-      "plagas": ["Gusano cogollero", "Barrenador del tallo", "Gallina ciega"],
-    },
-    "tomate": {
-      "nombre": "Tomate",
-      "imagen":
-          "https://images.unsplash.com/photo-1683008952375-410ae668e6b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
-      "fechasSiembra": "Todo el año (bajo riego)",
-      "fechasCosecha": "75-90 días después de trasplante",
-      "cicloVegetativo": "90-120 días",
-      "descripcion":
-          "Cultivo de alto valor comercial, requiere manejo intensivo.",
-      "fertilizantes": [
-        "Nitrógeno (N): 150-200 kg/ha",
-        "Fósforo (P₂O₅): 100-150 kg/ha",
-        "Potasio (K₂O): 200-250 kg/ha",
-      ],
-      "plagas": ["Mosca blanca", "Gusano del fruto", "Araña roja", "Trips"],
-    },
-    "chile": {
-      "nombre": "Chile Habanero",
-      "imagen":
-          "https://images.unsplash.com/photo-1720420866056-07fe15991f16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
-      "fechasSiembra": "Marzo - Mayo",
-      "fechasCosecha": "Julio - Octubre",
-      "cicloVegetativo": "90-150 días",
-      "descripcion": "Cultivo tradicional yucateco con denominación de origen.",
-      "fertilizantes": [
-        "Nitrógeno (N): 100-120 kg/ha",
-        "Fósforo (P₂O₅): 80-100 kg/ha",
-        "Potasio (K₂O): 120-150 kg/ha",
-      ],
-      "plagas": ["Picudo del chile", "Trips", "Mosca blanca", "Áfidos"],
-    },
-    "frijol": {
-      "nombre": "Frijol",
-      "imagen":
-          "https://images.unsplash.com/photo-1605402966404-ec40b9bd5009?q=80&w=1080",
-      "fechasSiembra": "Febrero - Abril / Agosto - Septiembre",
-      "fechasCosecha": "Mayo - Julio / Octubre - Noviembre",
-      "cicloVegetativo": "70-90 días",
-      "descripcion":
-          "Cultivo básico en la milpa mesoamericana, complementa nutricionalmente al maíz.",
-      "fertilizantes": [
-        "Nitrógeno (N): 20-40 kg/ha",
-        "Fósforo (P₂O₅): 40-60 kg/ha",
-        "Potasio (K₂O): 20-30 kg/ha",
-      ],
-      "plagas": [
-        "Trips",
-        "Mosca blanca",
-        "Picudo del frijol",
-      ],
-    },
-
-    "sandia": {
-      "nombre": "Sandía",
-      "imagen":
-          "https://images.unsplash.com/photo-1724167381533-4c91f4658e89?q=80&w=1080",
-      "fechasSiembra": "Febrero - Abril",
-      "fechasCosecha": "Mayo - Julio",
-      "cicloVegetativo": "80-100 días",
-      "descripcion":
-          "Cultivo de clima cálido muy popular en regiones tropicales por su alto contenido de agua.",
-      "fertilizantes": [
-        "Nitrógeno (N): 100-120 kg/ha",
-        "Fósforo (P₂O₅): 80-100 kg/ha",
-        "Potasio (K₂O): 120-150 kg/ha",
-      ],
-      "plagas": [
-        "Mosca blanca",
-        "Pulgones",
-        "Araña roja",
-      ],
-    },
-
-    "calabaza": {
-      "nombre": "Calabaza",
-      "imagen":
-          "https://images.unsplash.com/photo-1570586437263-ab629fccc818?q=80&w=1080",
-      "fechasSiembra": "Marzo - Mayo",
-      "fechasCosecha": "Junio - Septiembre",
-      "cicloVegetativo": "90-120 días",
-      "descripcion":
-          "Parte del sistema tradicional de milpa junto con maíz y frijol, ayuda a conservar la humedad del suelo.",
-      "fertilizantes": [
-        "Nitrógeno (N): 80-100 kg/ha",
-        "Fósforo (P₂O₅): 60-80 kg/ha",
-        "Potasio (K₂O): 80-100 kg/ha",
-      ],
-      "plagas": [
-        "Trips",
-        "Pulgones",
-        "Escarabajo del pepino",
-      ],
-    },
-  };
+  final String id;
 
   @override
   Widget build(BuildContext context) {
-    final cultivo = cultivosData[id] ?? cultivosData["maiz"]!;
+    final crop = CropCatalogService.byId(id);
 
     return Scaffold(
       backgroundColor: AppColors.cream,
@@ -130,12 +20,11 @@ class CropDetailsScreen extends StatelessWidget {
             Stack(
               children: [
                 Image.network(
-                  cultivo["imagen"],
+                  crop.heroImageUrl,
                   height: 260,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
-
                 Container(
                   height: 260,
                   decoration: const BoxDecoration(
@@ -146,7 +35,6 @@ class CropDetailsScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 Positioned(
                   top: 40,
                   left: 16,
@@ -155,14 +43,13 @@ class CropDetailsScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.arrow_back),
                     ),
                   ),
                 ),
-
                 Positioned(
                   bottom: 20,
                   left: 20,
@@ -171,7 +58,7 @@ class CropDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        cultivo["nombre"],
+                        crop.name,
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -179,7 +66,7 @@ class CropDetailsScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        cultivo["descripcion"],
+                        crop.description,
                         style: const TextStyle(color: Colors.white70),
                       ),
                     ],
@@ -187,7 +74,6 @@ class CropDetailsScreen extends StatelessWidget {
                 ),
               ],
             ),
-
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -195,100 +81,64 @@ class CropDetailsScreen extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: infoCard(
+                        child: _infoCard(
                           Icons.calendar_today,
-                          "Siembra",
-                          cultivo["fechasSiembra"],
+                          'Siembra',
+                          crop.sowingWindow,
                           Colors.green,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: infoCard(
+                        child: _infoCard(
                           Icons.spa,
-                          "Cosecha",
-                          cultivo["fechasCosecha"],
+                          'Cosecha',
+                          crop.harvestWindow,
                           Colors.orange,
                         ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 16),
-
-                  cardSection(
+                  _section(
                     icon: Icons.access_time,
-                    title: "Ciclo vegetativo",
-                    child: Text(
-                      cultivo["cicloVegetativo"],
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    title: 'Ciclo vegetativo',
+                    child: Text('${crop.cycleDays} días'),
                   ),
-
                   const SizedBox(height: 16),
-
-                  cardSection(
-                    icon: Icons.water_drop,
-                    title: "Fertilización recomendada",
+                  _section(
+                    icon: Icons.science_outlined,
+                    title: 'Fertilización sugerida',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: (cultivo["fertilizantes"] as List)
-                          .map<Widget>(
-                            (f) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Text("• $f"),
+                      children: crop.fertilizers
+                          .map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text('• $item'),
                             ),
                           )
                           .toList(),
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
-                  cardSection(
-                    icon: Icons.bug_report,
-                    title: "Plagas principales",
+                  _section(
+                    icon: Icons.bug_report_outlined,
+                    title: 'Plagas comunes',
                     child: Wrap(
                       spacing: 8,
-                      children: (cultivo["plagas"] as List)
-                          .map<Widget>(
-                            (p) => Chip(
-                              label: Text(p),
-                              backgroundColor: Colors.red.shade100,
+                      runSpacing: 8,
+                      children: crop.pests
+                          .map(
+                            (item) => Chip(
+                              label: Text(item),
+                              backgroundColor: Colors.orange.withValues(
+                                alpha: 0.12,
+                              ),
                             ),
                           )
                           .toList(),
                     ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.download),
-                    label: const Text("Descargar ficha técnica (PDF)"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.greenPrimary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 55),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, "/registrar");
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.greenDark,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 55),
-                    ),
-                    child: Text("Registrar plantación de ${cultivo["nombre"]}"),
                   ),
                 ],
               ),
@@ -299,25 +149,27 @@ class CropDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget infoCard(IconData icon, String label, String value, Color color) {
+  Widget _infoCard(IconData icon, String title, String value, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontSize: 12)),
+          const SizedBox(height: 8),
+          Text(title, style: const TextStyle(color: Colors.grey)),
+          const SizedBox(height: 4),
           Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-  Widget cardSection({
+  Widget _section({
     required IconData icon,
     required String title,
     required Widget child,
@@ -327,16 +179,22 @@ class CropDetailsScreen extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon),
-              const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Icon(icon, color: AppColors.greenDark),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),

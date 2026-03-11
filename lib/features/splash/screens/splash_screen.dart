@@ -37,10 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
             ShaderMask(
               shaderCallback: (bounds) => const LinearGradient(
-                colors: [
-                  AppColors.greenDark,
-                  AppColors.greenPrimary,
-                ],
+                colors: [AppColors.greenDark, AppColors.greenPrimary],
               ).createShader(bounds),
               child: const Text(
                 "Cultiva+",

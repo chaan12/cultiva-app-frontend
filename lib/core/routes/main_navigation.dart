@@ -11,11 +11,15 @@ import '../../shared/components/bottom_navbar.dart';
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
+  static MainNavigationState? of(BuildContext context) {
+    return context.findAncestorStateOfType<MainNavigationState>();
+  }
+
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  State<MainNavigation> createState() => MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class MainNavigationState extends State<MainNavigation> {
   int currentIndex = 0;
 
   final List<Widget> pages = [
@@ -26,6 +30,15 @@ class _MainNavigationState extends State<MainNavigation> {
     const ConfiguracionScreen(),
   ];
 
+  void goToTab(int index) {
+    if (index == currentIndex) {
+      return;
+    }
+    setState(() {
+      currentIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,11 +46,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
       bottomNavigationBar: CultivaBottomNav(
         currentIndex: currentIndex,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-        },
+        onTap: goToTab,
       ),
     );
   }

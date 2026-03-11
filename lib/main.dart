@@ -1,21 +1,33 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'features/splash/screens/splash_screen.dart';
+import 'shared/state/app_scope.dart';
+import 'shared/state/app_store.dart';
 
-void main() {
-  runApp(const CultivaApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final store = AppStore();
+  unawaited(store.initialize());
+  runApp(CultivaApp(store: store));
 }
 
 class CultivaApp extends StatelessWidget {
-  const CultivaApp({super.key});
+  const CultivaApp({super.key, required this.store});
+
+  final AppStore store;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Cultiva+',
-      theme: AppTheme.lightTheme,
-      home: const SplashScreen(),
+    return AppScope(
+      store: store,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Cultiva+',
+        theme: AppTheme.lightTheme,
+        home: const SplashScreen(),
+      ),
     );
   }
 }

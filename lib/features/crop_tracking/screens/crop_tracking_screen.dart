@@ -165,7 +165,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: Colors.white24),
             ),
@@ -223,7 +223,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
@@ -257,7 +257,8 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
           Switch.adaptive(
             value: notifications,
             onChanged: (v) => setState(() => notifications = v),
-            activeColor: const Color(0xFF00C853),
+            activeThumbColor: const Color(0xFF00C853),
+            activeTrackColor: const Color(0xFF00C853).withValues(alpha: 0.35),
           ),
         ],
       ),
@@ -331,7 +332,10 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: priorityColor.withOpacity(0.3), width: 1),
+        border: Border.all(
+          color: priorityColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -341,7 +345,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: priorityColor.withOpacity(0.1),
+                color: priorityColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(event["icon"], color: priorityColor),
@@ -399,16 +403,12 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
             ),
           ),
           const SizedBox(height: 25),
-          ...timelineStages
-              .asMap()
-              .entries
-              .map(
-                (entry) => _timelineItem(
-                  entry.value,
-                  entry.key == timelineStages.length - 1,
-                ),
-              )
-              .toList(),
+          ...timelineStages.asMap().entries.map(
+            (entry) => _timelineItem(
+              entry.value,
+              entry.key == timelineStages.length - 1,
+            ),
+          ),
         ],
       ),
     );
