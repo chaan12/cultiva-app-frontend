@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
 import '../../features/crops_catalog/models/crop_catalog_item.dart';
@@ -27,8 +30,11 @@ class AppStore extends ChangeNotifier {
   AppSettings _settings = AppSettings.defaults();
   List<CropRecord> _crops = <CropRecord>[];
   WeatherSnapshot? _weather;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  List<ConnectivityResult> _connectivityResults = const <ConnectivityResult>[];
   bool _initialized = false;
   bool _isBusy = false;
+  bool _isRefreshingWeather = false;
   Future<void>? _initializationFuture;
 
   AppSettings get settings => _settings;
@@ -45,6 +51,10 @@ class AppStore extends ChangeNotifier {
   }
 
   WeatherSnapshot? get weather => _weather;
+  DateTime? get lastWifiSyncAt => _weather?.lastWifiSyncAt;
+  bool get hasWifiConnection =>
+      _connectivityResults.contains(ConnectivityResult.wifi);
+  bool get isShowingCachedWeather => _weather?.isFromCache ?? false;
   bool get initialized => _initialized;
   bool get isBusy => _isBusy;
 
@@ -148,38 +158,27 @@ class AppStore extends ChangeNotifier {
     debugPrint('[AppStore] Persistencia local inicializada');
     _settings = await _databaseService.loadSettings();
     _crops = await _databaseService.loadCrops();
+    _weather = await _databaseService.loadWeather();
     debugPrint(
       '[AppStore] Settings cargados: location=${_settings.locationName}, autoLocation=${_settings.autoLocation}, lat=${_settings.latitude}, lng=${_settings.longitude}',
     );
     debugPrint('[AppStore] Cultivos cargados: ${_crops.length}');
+    debugPrint(
+      '[AppStore] Clima local cargado: ${_weather == null ? 'sin cache' : _weather!.updatedAt.toIso8601String()}',
+    );
+    await _initializeConnectivity();
     _initialized = true;
     notifyListeners();
     try {
-      if (_settings.autoLocation) {
-        debugPrint('[AppStore] Intentando usar ubicación actual');
-        final location = await _locationService.getCurrentLocation();
-        _settings = _settings.copyWith(
-          autoLocation: true,
-          locationName: location.label,
-          latitude: location.latitude,
-          longitude: location.longitude,
-        );
-        await _databaseService.saveSettings(_settings);
-        await _refreshWeatherInternal();
-      } else if (_settings.latitude != null && _settings.longitude != null) {
-        debugPrint('[AppStore] Usando coordenadas guardadas');
-        await _refreshWeatherInternal();
-      } else {
-        debugPrint(
-          '[AppStore] Sin coordenadas, geocodificando ${_settings.locationName}',
-        );
-        final fallback = await _locationService.geocode(_settings.locationName);
-        _settings = _settings.copyWith(
-          latitude: fallback.latitude,
-          longitude: fallback.longitude,
-        );
-        await _databaseService.saveSettings(_settings);
-        await _refreshWeatherInternal();
+      await _ensureLocationCoordinates(
+        forceCurrentLocation: _settings.autoLocation,
+        allowGeocoding: hasWifiConnection,
+      );
+      if (hasWifiConnection) {
+        await _refreshWeatherInternal(syncTriggeredByWifi: true);
+      } else if (_weather != null) {
+        _weather = _weather!.copyWith(isFromCache: true);
+        notifyListeners();
       }
     } catch (error) {
       debugPrint('[AppStore] Inicialización de ubicación/clima falló: $error');
@@ -247,7 +246,11 @@ class AppStore extends ChangeNotifier {
       debugPrint(
         '[AppStore] Ubicación actual guardada: ${location.label} (${location.latitude}, ${location.longitude})',
       );
-      await _refreshWeatherInternal();
+      if (hasWifiConnection) {
+        await _refreshWeatherInternal(syncTriggeredByWifi: true);
+      } else {
+        _clearWeatherIfOutdated();
+      }
     } finally {
       _setBusy(false);
       if (!silent) {
@@ -272,7 +275,11 @@ class AppStore extends ChangeNotifier {
       debugPrint(
         '[AppStore] Ubicación manual guardada: ${location.label} (${location.latitude}, ${location.longitude})',
       );
-      await _refreshWeatherInternal();
+      if (hasWifiConnection) {
+        await _refreshWeatherInternal(syncTriggeredByWifi: true);
+      } else {
+        _clearWeatherIfOutdated();
+      }
     } finally {
       _setBusy(false);
       notifyListeners();
@@ -294,7 +301,11 @@ class AppStore extends ChangeNotifier {
       debugPrint(
         '[AppStore] Ubicación predefinida guardada: ${location.label} (${location.latitude}, ${location.longitude})',
       );
-      await _refreshWeatherInternal();
+      if (hasWifiConnection) {
+        await _refreshWeatherInternal(syncTriggeredByWifi: true);
+      } else {
+        _clearWeatherIfOutdated();
+      }
     } finally {
       _setBusy(false);
       notifyListeners();
@@ -303,28 +314,149 @@ class AppStore extends ChangeNotifier {
 
   Future<void> refreshWeather() async {
     await initialize();
-    await _refreshWeatherInternal();
+    await _ensureLocationCoordinates(
+      forceCurrentLocation: _settings.autoLocation,
+      allowGeocoding: hasWifiConnection,
+    );
+    if (!hasWifiConnection) {
+      debugPrint('[AppStore] Sin Wi-Fi; mostrando clima guardado si existe');
+      if (_weather != null) {
+        _weather = _weather!.copyWith(isFromCache: true);
+        notifyListeners();
+      }
+      return;
+    }
+    await _refreshWeatherInternal(syncTriggeredByWifi: true);
   }
 
-  Future<void> _refreshWeatherInternal() async {
+  Future<void> _refreshWeatherInternal({
+    required bool syncTriggeredByWifi,
+  }) async {
     final latitude = _settings.latitude;
     final longitude = _settings.longitude;
-    if (latitude == null || longitude == null) {
+    if (latitude == null || longitude == null || _isRefreshingWeather) {
       debugPrint('[AppStore] No hay coordenadas para consultar clima');
       return;
     }
-    debugPrint(
-      '[AppStore] Consultando clima para ${_settings.locationName} ($latitude, $longitude)',
-    );
-    _weather = await _weatherService.fetchWeather(
-      latitude: latitude,
-      longitude: longitude,
-      locationLabel: _settings.locationName,
-    );
-    debugPrint(
-      '[AppStore] Clima actualizado: ${_weather?.temperatureC}°C ${_weather?.description}',
-    );
+    _isRefreshingWeather = true;
+    try {
+      debugPrint(
+        '[AppStore] Consultando clima para ${_settings.locationName} ($latitude, $longitude)',
+      );
+      final snapshot = await _weatherService.fetchWeather(
+        latitude: latitude,
+        longitude: longitude,
+        locationLabel: _settings.locationName,
+      );
+      final persistedSnapshot = snapshot.copyWith(
+        lastWifiSyncAt: syncTriggeredByWifi
+            ? DateTime.now()
+            : _weather?.lastWifiSyncAt,
+        isFromCache: false,
+      );
+      _weather = persistedSnapshot;
+      await _databaseService.saveWeather(persistedSnapshot);
+      debugPrint(
+        '[AppStore] Clima actualizado: ${_weather?.temperatureC}°C ${_weather?.description}',
+      );
+    } catch (error) {
+      debugPrint('[AppStore] Error al consultar clima, se usa cache: $error');
+      if (_weather != null) {
+        _weather = _weather!.copyWith(isFromCache: true);
+      } else {
+        _weather = await _databaseService.loadWeather();
+      }
+    } finally {
+      _isRefreshingWeather = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _initializeConnectivity() async {
+    await _connectivitySubscription?.cancel();
+    final connectivity = Connectivity();
+    _connectivityResults = await connectivity.checkConnectivity();
+    _connectivitySubscription = connectivity.onConnectivityChanged.listen((
+      results,
+    ) {
+      unawaited(_handleConnectivityChange(results));
+    });
+  }
+
+  Future<void> _handleConnectivityChange(
+    List<ConnectivityResult> results,
+  ) async {
+    final hadWifi = hasWifiConnection;
+    _connectivityResults = results;
+    if (!hadWifi && hasWifiConnection) {
+      debugPrint('[AppStore] Wi-Fi detectado; iniciando sincronización local');
+      await _ensureLocationCoordinates(
+        forceCurrentLocation: _settings.autoLocation,
+        allowGeocoding: true,
+      );
+      await _refreshWeatherInternal(syncTriggeredByWifi: true);
+      return;
+    }
+    if (hadWifi && !hasWifiConnection && _weather != null) {
+      _weather = _weather!.copyWith(isFromCache: true);
+    }
     notifyListeners();
+  }
+
+  Future<void> _ensureLocationCoordinates({
+    bool forceCurrentLocation = false,
+    bool allowGeocoding = true,
+  }) async {
+    if (_settings.autoLocation) {
+      if (!forceCurrentLocation &&
+          _settings.latitude != null &&
+          _settings.longitude != null) {
+        return;
+      }
+      debugPrint('[AppStore] Intentando usar ubicación actual');
+      final location = await _locationService.getCurrentLocation();
+      _settings = _settings.copyWith(
+        autoLocation: true,
+        locationName: location.label,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      );
+      await _databaseService.saveSettings(_settings);
+      return;
+    }
+
+    if (_settings.latitude != null && _settings.longitude != null) {
+      debugPrint('[AppStore] Usando coordenadas guardadas');
+      return;
+    }
+
+    if (!allowGeocoding) {
+      debugPrint(
+        '[AppStore] Sin Wi-Fi; no se geocodifica ${_settings.locationName}',
+      );
+      return;
+    }
+
+    debugPrint(
+      '[AppStore] Sin coordenadas, geocodificando ${_settings.locationName}',
+    );
+    final fallback = await _locationService.geocode(_settings.locationName);
+    _settings = _settings.copyWith(
+      latitude: fallback.latitude,
+      longitude: fallback.longitude,
+    );
+    await _databaseService.saveSettings(_settings);
+  }
+
+  void _clearWeatherIfOutdated() {
+    if (_weather == null) {
+      return;
+    }
+    if (_weather!.locationLabel != _settings.locationName) {
+      _weather = null;
+      return;
+    }
+    _weather = _weather!.copyWith(isFromCache: true);
   }
 
   void _setBusy(bool value) {
@@ -385,5 +517,11 @@ class AppStore extends ChangeNotifier {
       }
     }
     return false;
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
   }
 }

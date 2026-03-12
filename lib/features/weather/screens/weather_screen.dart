@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../shared/models/weather_snapshot.dart';
 import '../../../shared/state/app_scope.dart';
@@ -26,11 +27,19 @@ class _ClimaScreenState extends State<ClimaScreen> {
         onRefresh: store.refreshWeather,
         child: ListView(
           children: [
-            _buildHeader(weather, store.settings.locationName),
+            _buildHeader(
+              weather,
+              store.settings.locationName,
+              lastWifiSyncAt: store.lastWifiSyncAt,
+              hasWifiConnection: store.hasWifiConnection,
+              isShowingCachedWeather: store.isShowingCachedWeather,
+            ),
             if (weather == null)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CircularProgressIndicator()),
+              Padding(
+                padding: const EdgeInsets.all(32),
+                child: store.isBusy
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildEmptyState(store.hasWifiConnection),
               )
             else
               Padding(
@@ -38,7 +47,16 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 child: Column(
                   children: [
                     const SizedBox(height: 20),
+                    _buildSyncStatusCard(
+                      weather,
+                      lastWifiSyncAt: store.lastWifiSyncAt,
+                      hasWifiConnection: store.hasWifiConnection,
+                      isShowingCachedWeather: store.isShowingCachedWeather,
+                    ),
+                    const SizedBox(height: 20),
                     _buildAlertSection(weather),
+                    const SizedBox(height: 20),
+                    _buildDailyForecastSection(weather),
                     const SizedBox(height: 20),
                     _buildChartCard(
                       'Temperatura NOAA GFS (24h)',
@@ -79,7 +97,13 @@ class _ClimaScreenState extends State<ClimaScreen> {
     );
   }
 
-  Widget _buildHeader(WeatherSnapshot? weather, String fallbackLocation) {
+  Widget _buildHeader(
+    WeatherSnapshot? weather,
+    String fallbackLocation, {
+    required DateTime? lastWifiSyncAt,
+    required bool hasWifiConnection,
+    required bool isShowingCachedWeather,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
@@ -106,8 +130,66 @@ class _ClimaScreenState extends State<ClimaScreen> {
             weather?.locationLabel ?? fallbackLocation,
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
+          const SizedBox(height: 10),
+          _buildHeaderBadge(
+            hasWifiConnection: hasWifiConnection,
+            isShowingCachedWeather: isShowingCachedWeather,
+            lastWifiSyncAt: lastWifiSyncAt,
+          ),
           const SizedBox(height: 25),
           if (weather != null) _buildMainWeatherCard(weather),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderBadge({
+    required bool hasWifiConnection,
+    required bool isShowingCachedWeather,
+    required DateTime? lastWifiSyncAt,
+  }) {
+    final label = hasWifiConnection
+        ? 'Wi-Fi conectado'
+        : isShowingCachedWeather
+        ? 'Mostrando datos guardados'
+        : 'Sin Wi-Fi';
+    final subtitle = lastWifiSyncAt == null
+        ? 'Aún no hay una sincronización local'
+        : 'Última sincronización: ${_formatDateTime(lastWifiSyncAt)}';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            hasWifiConnection ? Icons.wifi : Icons.cloud_off,
+            color: Colors.white,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -263,6 +345,208 @@ class _ClimaScreenState extends State<ClimaScreen> {
               ),
             ),
       ],
+    );
+  }
+
+  Widget _buildSyncStatusCard(
+    WeatherSnapshot weather, {
+    required DateTime? lastWifiSyncAt,
+    required bool hasWifiConnection,
+    required bool isShowingCachedWeather,
+  }) {
+    final forecastStart = weather.forecastStartDate;
+    final forecastEnd = weather.forecastEndDate;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFDCE6D2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                hasWifiConnection ? Icons.wifi : Icons.wifi_off,
+                color: hasWifiConnection
+                    ? const Color(0xFF1565C0)
+                    : Colors.orange.shade700,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Sincronización offline',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _statusRow(
+            'Última conexión por Wi-Fi',
+            lastWifiSyncAt == null
+                ? 'Aún no registrada'
+                : _formatDateTime(lastWifiSyncAt),
+          ),
+          _statusRow(
+            'Rango guardado local',
+            forecastStart == null || forecastEnd == null
+                ? 'Sin rango disponible'
+                : '${_formatDate(forecastStart)} al ${_formatDate(forecastEnd)}',
+          ),
+          _statusRow(
+            'Datos mostrados',
+            isShowingCachedWeather
+                ? 'Según lo sincronizado ese día'
+                : 'Sincronización actual desde Wi-Fi',
+          ),
+          const SizedBox(height: 10),
+          Text(
+            isShowingCachedWeather
+                ? 'La app está usando el pronóstico guardado localmente para mostrar lo que reportaba la API en la última sincronización.'
+                : 'La app puede guardar hoy y los próximos 15 días para seguir mostrándolos si después te quedas sin Wi-Fi.',
+            style: const TextStyle(color: Colors.black54, height: 1.35),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 150,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyForecastSection(WeatherSnapshot weather) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Pronóstico guardado (hoy + 15 días)',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 182,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: weather.daily.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final day = weather.daily[index];
+              return Container(
+                width: 150,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: const Color(0xFFDDE7D0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      day.label,
+                      style: const TextStyle(
+                        color: Color(0xFF0D5D33),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      _formatDate(day.date),
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                    const Spacer(),
+                    Text(
+                      day.description,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${day.maxTempC.toStringAsFixed(0)}° / ${day.minTempC.toStringAsFixed(0)}°',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Lluvia ${day.rainProbability}%',
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 12,
+                        ),
+                      
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(bool hasWifiConnection) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFDDE7D0)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            hasWifiConnection ? Icons.cloud_sync : Icons.wifi_off,
+            size: 42,
+            color: const Color(0xFF1565C0),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            hasWifiConnection
+                ? 'Esperando la primera sincronización del clima'
+                : 'Sin Wi-Fi y sin datos guardados todavía',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasWifiConnection
+                ? 'En cuanto la consulta termine, se guardará el pronóstico local para hoy y los próximos 15 días.'
+                : 'Conéctate a Wi-Fi para descargar el pronóstico y dejarlo disponible offline.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.black54, height: 1.35),
+          ),
+        ],
+      ),
     );
   }
 
@@ -897,6 +1181,14 @@ class _ClimaScreenState extends State<ClimaScreen> {
       default:
         return const _MetricMeta(Icons.info, Colors.grey, 'Dato');
     }
+  }
+
+  String _formatDateTime(DateTime value) {
+    return DateFormat('d MMM y, HH:mm', 'es_MX').format(value);
+  }
+
+  String _formatDate(DateTime value) {
+    return DateFormat('d MMM', 'es_MX').format(value);
   }
 }
 

@@ -143,7 +143,7 @@ class WeatherService {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
       'timezone': 'auto',
-      'forecast_days': '7',
+      'forecast_days': '16',
       'current':
           'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_gusts_10m,visibility,uv_index',
       'hourly':
@@ -213,6 +213,7 @@ class WeatherService {
       dailyPoints.add(
         DailyWeatherPoint(
           label: _weekdayLabel(DateTime.parse(dailyTime[index]).weekday),
+          date: DateTime.parse(dailyTime[index]),
           minTempC: index < dailyMin.length ? dailyMin[index] : 0,
           maxTempC: index < dailyMax.length ? dailyMax[index] : 0,
           rainProbability: index < dailyRain.length ? dailyRain[index] : 0,
@@ -261,6 +262,7 @@ class WeatherService {
       hourlyPoints.add(
         HourlyWeatherPoint(
           label: '${time.hour.toString().padLeft(2, '0')}:00',
+          time: time,
           temperatureC: index < hourlyTemp.length ? hourlyTemp[index] : 0,
           humidity: index < hourlyHumidity.length ? hourlyHumidity[index] : 0,
           rainProbability: index < hourlyRainProbability.length

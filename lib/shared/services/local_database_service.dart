@@ -4,10 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/app_settings.dart';
 import '../models/crop_record.dart';
+import '../models/weather_snapshot.dart';
 
 class LocalDatabaseService {
   static const _cropsKey = 'cultiva_crops';
   static const _settingsKey = 'cultiva_settings';
+  static const _weatherKey = 'cultiva_weather';
 
   SharedPreferencesAsync? _preferences;
 
@@ -73,5 +75,18 @@ class LocalDatabaseService {
 
   Future<void> saveSettings(AppSettings settings) async {
     await _prefs.setString(_settingsKey, jsonEncode(settings.toMap()));
+  }
+
+  Future<WeatherSnapshot?> loadWeather() async {
+    final raw = await _prefs.getString(_weatherKey);
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    return WeatherSnapshot.fromMap(decoded, isFromCache: true);
+  }
+
+  Future<void> saveWeather(WeatherSnapshot weather) async {
+    await _prefs.setString(_weatherKey, jsonEncode(weather.toMap()));
   }
 }
