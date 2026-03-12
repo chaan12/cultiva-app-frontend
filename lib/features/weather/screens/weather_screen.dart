@@ -95,7 +95,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Clima Premium',
+            'Clima',
             style: TextStyle(
               color: Colors.white,
               fontSize: 32,
