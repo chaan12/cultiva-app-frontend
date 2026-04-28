@@ -41,13 +41,17 @@ class MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(index: currentIndex, children: pages),
-
-      bottomNavigationBar: CultivaBottomNav(
-        currentIndex: currentIndex,
-        onTap: goToTab,
+  return Scaffold(
+    body: SafeArea(
+      child: IndexedStack(
+        index: currentIndex,
+        children: pages,
       ),
-    );
-  }
+    ),
+    bottomNavigationBar: SafeArea(child: CultivaBottomNav(
+      currentIndex: currentIndex,
+      onTap: goToTab,
+    )),
+  );
+}
 }

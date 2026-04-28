@@ -30,6 +30,8 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
   DateTime? _selectedDate;
   Map<String, String> _errors = <String, String>{};
 
+  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -138,27 +140,39 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Obtenemos la orientación para ajustar el diseño
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF1F4E0),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: _showSuccess
-                    ? _buildSuccessView()
-                    : switch (_step) {
-                        1 => _buildSelectCrop(),
-                        2 => _buildCropDetails(),
-                        _ => _buildConfirmStep(),
-                      },
+      // SafeArea asegura que el contenido no se solape con muescas o barras de estado
+      body: SafeArea( 
+        top: false, // Dejamos false arriba si queremos que el color verde del header llegue hasta arriba
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                // Agregamos padding inferior para que el contenido no pegue al borde
+                padding: EdgeInsets.only(
+                  left: 24, 
+                  right: 24, 
+                  bottom: isLandscape ? 40 : 24
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: _showSuccess
+                      ? _buildSuccessView()
+                      : switch (_step) {
+                          1 => _buildSelectCrop(isLandscape), // Pasamos la orientación
+                          2 => _buildCropDetails(),
+                          _ => _buildConfirmStep(),
+                        },
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -213,7 +227,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
     );
   }
 
-  Widget _buildSelectCrop() {
+  Widget _buildSelectCrop(bool isLandscape) {
     return Column(
       key: const ValueKey<int>(1),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,11 +246,13 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: CropCatalogService.items.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            // Si es horizontal ponemos 3 o 4 columnas, si es vertical 2
+            crossAxisCount: isLandscape ? 3 : 2, 
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: 0.82,
+            // Ajustamos el aspect ratio: en horizontal los elementos suelen necesitar ser más anchos
+            childAspectRatio: isLandscape ? 0.85 : 0.7,
           ),
           itemBuilder: (_, index) {
             final item = CropCatalogService.items[index];

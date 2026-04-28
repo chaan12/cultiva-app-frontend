@@ -561,12 +561,16 @@ class CropDetailsScreen extends StatelessWidget {
                 child: Icon(icon, color: accent),
               ),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: AppColors.greenDark,
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: AppColors.greenDark,
+                  ),
                 ),
               ),
             ],
@@ -586,7 +590,13 @@ class CropDetailsScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: AppColors.greenDark),
           const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(height: 1.4))),
+          Flexible( 
+            child: Text(
+              text,
+              style: const TextStyle(height: 1.4),
+              softWrap: true,
+            ),
+          ),
         ],
       ),
     );
