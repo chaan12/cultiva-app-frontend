@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'canuelas_screen.dart';
 import '../../../shared/models/weather_snapshot.dart';
 import '../../../shared/state/app_scope.dart';
 
@@ -36,10 +37,16 @@ class _ClimaScreenState extends State<ClimaScreen> {
             ),
             if (weather == null)
               Padding(
-                padding: const EdgeInsets.all(32),
-                child: store.isBusy
-                    ? const Center(child: CircularProgressIndicator())
-                    : _buildEmptyState(store.hasWifiConnection),
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                child: Column(
+                  children: [
+                    _buildCanuelasEntryCard(),
+                    const SizedBox(height: 20),
+                    store.isBusy
+                        ? const Center(child: CircularProgressIndicator())
+                        : _buildEmptyState(store.hasWifiConnection),
+                  ],
+                ),
               )
             else
               Padding(
@@ -53,6 +60,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
                       hasWifiConnection: store.hasWifiConnection,
                       isShowingCachedWeather: store.isShowingCachedWeather,
                     ),
+                    const SizedBox(height: 20),
+                    _buildCanuelasEntryCard(),
                     const SizedBox(height: 20),
                     _buildAlertSection(weather),
                     const SizedBox(height: 20),
@@ -93,6 +102,76 @@ class _ClimaScreenState extends State<ClimaScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCanuelasEntryCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE4DAC3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF246B45), Color(0xFFD69A2D)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cabañuelas',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Ve una lectura sencilla de meses con poca o mucha lluvia.',
+                  style: TextStyle(color: Colors.black54, height: 1.3),
+                ),
+              ],
+            ),
+          ),
+          IconButton.filled(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const CanuelasScreen()),
+              );
+            },
+            icon: const Icon(Icons.arrow_forward),
+            tooltip: 'Ver cabañuelas',
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFF246B45),
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -500,8 +579,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
                       style: const TextStyle(
                         color: Colors.black54,
                         fontSize: 12,
-                        ),
-                      
+                      ),
                     ),
                   ],
                 ),
