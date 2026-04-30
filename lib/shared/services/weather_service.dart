@@ -103,21 +103,7 @@ class WeatherService {
               available: provider.snapshot != null,
               data: provider.snapshot == null
                   ? <String, String>{'status': 'No disponible'}
-                  : <String, String>{
-                      'temperature':
-                          '${provider.snapshot!.temperatureC.toStringAsFixed(1)}°C',
-                      'humidity': '${provider.snapshot!.humidity}%',
-                      'rainProbability':
-                          '${provider.snapshot!.rainProbability}%',
-                      'windSpeed':
-                          '${provider.snapshot!.windSpeedKmh.toStringAsFixed(1)} km/h',
-                      'uvIndex': provider.snapshot!.uvIndex.toStringAsFixed(1),
-                      'visibility':
-                          '${provider.snapshot!.visibilityKm.toStringAsFixed(1)} km',
-                      'pressure':
-                          '${provider.snapshot!.pressureHpa.toStringAsFixed(0)} hPa',
-                      'cloudCover': '${provider.snapshot!.cloudCover}%',
-                    },
+                  : _buildProviderData(provider.snapshot!),
               alerts: provider.snapshot == null
                   ? <String>[
                       provider.errorMessage ??
@@ -147,7 +133,7 @@ class WeatherService {
       'current':
           'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_gusts_10m,visibility,uv_index',
       'hourly':
-          'temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m,uv_index,visibility',
+          'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,uv_index,visibility,weather_code,cloud_cover,pressure_msl',
       'daily':
           'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
     });
@@ -248,13 +234,37 @@ class WeatherService {
         (hourly['wind_speed_10m'] as List<dynamic>? ?? const <dynamic>[])
             .map(_toDouble)
             .toList();
-    final hourlyUv = (hourly['uv_index'] as List<dynamic>? ?? const <dynamic>[])
-        .map(_toDouble)
+    final hourlyWindGustRaw =
+        hourly['wind_gusts_10m'] as List<dynamic>? ?? const <dynamic>[];
+    final hourlyWindGust = hourlyWindGustRaw.map(_toDouble).toList();
+    final hourlyUvRaw =
+        hourly['uv_index'] as List<dynamic>? ?? const <dynamic>[];
+    final hourlyUv = hourlyUvRaw.map(_toDouble).toList();
+    final hourlyVisibilityRaw =
+        hourly['visibility'] as List<dynamic>? ?? const <dynamic>[];
+    final hourlyVisibility = hourlyVisibilityRaw
+        .map((value) => _toDouble(value) / 1000)
         .toList();
-    final hourlyVisibility =
-        (hourly['visibility'] as List<dynamic>? ?? const <dynamic>[])
-            .map((value) => _toDouble(value) / 1000)
+    final hourlyCode =
+        (hourly['weather_code'] as List<dynamic>? ?? const <dynamic>[])
+            .map(_toInt)
             .toList();
+    final hourlyCloudCover =
+        (hourly['cloud_cover'] as List<dynamic>? ?? const <dynamic>[])
+            .map(_toInt)
+            .toList();
+    final hourlyPressure =
+        (hourly['pressure_msl'] as List<dynamic>? ?? const <dynamic>[])
+            .map(_toDouble)
+            .toList();
+    final hourlyApparent =
+        (hourly['apparent_temperature'] as List<dynamic>? ?? const <dynamic>[])
+            .map(_toDouble)
+            .toList();
+    final currentHourlyIndex = _nearestHourlyIndex(
+      hourlyTime,
+      currentTime: current['time']?.toString(),
+    );
 
     final hourlyPoints = <HourlyWeatherPoint>[];
     for (var index = 0; index < hourlyTime.length && index < 24; index++) {
@@ -278,24 +288,129 @@ class WeatherService {
       );
     }
 
+    final temperatureC = _readCurrentDouble(
+      current,
+      'temperature_2m',
+      hourlyTemp,
+      currentHourlyIndex,
+    );
+    final humidity = _readCurrentInt(
+      current,
+      'relative_humidity_2m',
+      hourlyHumidity,
+      currentHourlyIndex,
+    );
+    final windSpeedKmh = _readCurrentDouble(
+      current,
+      'wind_speed_10m',
+      hourlyWind,
+      currentHourlyIndex,
+    );
+    final windGustKmh = _readCurrentDouble(
+      current,
+      'wind_gusts_10m',
+      hourlyWindGust,
+      currentHourlyIndex,
+    );
+    final rainProbability =
+        currentHourlyIndex >= 0 &&
+            currentHourlyIndex < hourlyRainProbability.length
+        ? hourlyRainProbability[currentHourlyIndex]
+        : (hourlyPoints.isNotEmpty ? hourlyPoints.first.rainProbability : 0);
+    final precipitationMm = _readCurrentDouble(
+      current,
+      'precipitation',
+      hourlyRain,
+      currentHourlyIndex,
+    );
+    final uvIndex = _readCurrentDouble(
+      current,
+      'uv_index',
+      hourlyUv,
+      currentHourlyIndex,
+    );
+    final visibilityKm = _readCurrentDouble(
+      current,
+      'visibility',
+      hourlyVisibility,
+      currentHourlyIndex,
+      currentScale: 1 / 1000,
+    );
+    final weatherCode = _readCurrentInt(
+      current,
+      'weather_code',
+      hourlyCode,
+      currentHourlyIndex,
+      fallback: dailyCode.isNotEmpty ? dailyCode.first : 0,
+    );
+    final cloudCover = _readCurrentInt(
+      current,
+      'cloud_cover',
+      hourlyCloudCover,
+      currentHourlyIndex,
+    );
+    final pressureHpa = _readCurrentDouble(
+      current,
+      'pressure_msl',
+      hourlyPressure,
+      currentHourlyIndex,
+    );
+    final apparentTemperatureC = _readCurrentDouble(
+      current,
+      'apparent_temperature',
+      hourlyApparent,
+      currentHourlyIndex,
+      fallback: temperatureC,
+    );
+    final unavailableMetrics = <String>{
+      if (!_hasCurrentValue(current, 'uv_index') &&
+          _isUnavailableSeries(hourlyUvRaw))
+        'uvIndex',
+      if (!_hasCurrentValue(current, 'visibility') &&
+          _isUnavailableSeries(hourlyVisibilityRaw))
+        'visibility',
+    };
+
     return _ProviderWeather(
-      temperatureC: _toDouble(current['temperature_2m']),
-      description: _weatherDescription(_toInt(current['weather_code'])),
-      humidity: _toInt(current['relative_humidity_2m']),
-      windSpeedKmh: _toDouble(current['wind_speed_10m']),
-      windGustKmh: _toDouble(current['wind_gusts_10m']),
-      rainProbability: hourlyPoints.isNotEmpty
-          ? hourlyPoints.first.rainProbability
-          : 0,
-      precipitationMm: _toDouble(current['precipitation']),
-      uvIndex: _toDouble(current['uv_index']),
-      visibilityKm: _toDouble(current['visibility']) / 1000,
-      cloudCover: _toInt(current['cloud_cover']),
-      pressureHpa: _toDouble(current['pressure_msl']),
-      apparentTemperatureC: _toDouble(current['apparent_temperature']),
+      temperatureC: temperatureC,
+      description: _weatherDescription(weatherCode),
+      humidity: humidity,
+      windSpeedKmh: windSpeedKmh,
+      windGustKmh: windGustKmh,
+      rainProbability: rainProbability,
+      precipitationMm: precipitationMm,
+      uvIndex: uvIndex,
+      visibilityKm: visibilityKm,
+      cloudCover: cloudCover,
+      pressureHpa: pressureHpa,
+      apparentTemperatureC: apparentTemperatureC,
       daily: dailyPoints,
       hourly: hourlyPoints,
+      unavailableMetrics: unavailableMetrics,
     );
+  }
+
+  Map<String, String> _buildProviderData(_ProviderWeather weather) {
+    String unavailableAware(String key, String value) {
+      return weather.unavailableMetrics.contains(key) ? 'N/D' : value;
+    }
+
+    return <String, String>{
+      'temperature': '${weather.temperatureC.toStringAsFixed(1)}°C',
+      'humidity': '${weather.humidity}%',
+      'rainProbability': '${weather.rainProbability}%',
+      'windSpeed': '${weather.windSpeedKmh.toStringAsFixed(1)} km/h',
+      'uvIndex': unavailableAware(
+        'uvIndex',
+        weather.uvIndex.toStringAsFixed(1),
+      ),
+      'visibility': unavailableAware(
+        'visibility',
+        '${weather.visibilityKm.toStringAsFixed(1)} km',
+      ),
+      'pressure': '${weather.pressureHpa.toStringAsFixed(0)} hPa',
+      'cloudCover': '${weather.cloudCover}%',
+    };
   }
 
   List<String> _buildAlerts(_ProviderWeather weather) {
@@ -330,6 +445,70 @@ class WeatherService {
       return value.toInt();
     }
     return 0;
+  }
+
+  bool _hasCurrentValue(Map<String, dynamic> current, String key) {
+    return current.containsKey(key) && current[key] != null;
+  }
+
+  bool _isUnavailableSeries(List<dynamic> values) {
+    return values.isEmpty || values.every((value) => value == null);
+  }
+
+  int _nearestHourlyIndex(List<String> hourlyTime, {String? currentTime}) {
+    if (hourlyTime.isEmpty) {
+      return -1;
+    }
+    final target = currentTime == null || currentTime.isEmpty
+        ? DateTime.now()
+        : DateTime.tryParse(currentTime) ?? DateTime.now();
+    var bestIndex = 0;
+    var bestDifference = Duration(days: 9999);
+    for (var index = 0; index < hourlyTime.length; index++) {
+      final parsed = DateTime.tryParse(hourlyTime[index]);
+      if (parsed == null) {
+        continue;
+      }
+      final difference = parsed.difference(target).abs();
+      if (difference < bestDifference) {
+        bestDifference = difference;
+        bestIndex = index;
+      }
+    }
+    return bestIndex;
+  }
+
+  double _readCurrentDouble(
+    Map<String, dynamic> current,
+    String key,
+    List<double> hourlyValues,
+    int hourlyIndex, {
+    double fallback = 0,
+    double currentScale = 1,
+  }) {
+    if (_hasCurrentValue(current, key)) {
+      return _toDouble(current[key]) * currentScale;
+    }
+    if (hourlyIndex >= 0 && hourlyIndex < hourlyValues.length) {
+      return hourlyValues[hourlyIndex];
+    }
+    return fallback;
+  }
+
+  int _readCurrentInt(
+    Map<String, dynamic> current,
+    String key,
+    List<int> hourlyValues,
+    int hourlyIndex, {
+    int fallback = 0,
+  }) {
+    if (_hasCurrentValue(current, key)) {
+      return _toInt(current[key]);
+    }
+    if (hourlyIndex >= 0 && hourlyIndex < hourlyValues.length) {
+      return hourlyValues[hourlyIndex];
+    }
+    return fallback;
   }
 
   String _weatherDescription(int code) {
@@ -426,6 +605,7 @@ class _ProviderWeather {
     required this.apparentTemperatureC,
     required this.daily,
     required this.hourly,
+    required this.unavailableMetrics,
   });
 
   final double temperatureC;
@@ -442,4 +622,5 @@ class _ProviderWeather {
   final double apparentTemperatureC;
   final List<DailyWeatherPoint> daily;
   final List<HourlyWeatherPoint> hourly;
+  final Set<String> unavailableMetrics;
 }

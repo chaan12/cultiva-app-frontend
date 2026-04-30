@@ -1121,49 +1121,68 @@ class _ClimaScreenState extends State<ClimaScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: source.available
-                ? GridView.count(
-                    crossAxisCount: 3,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio: 0.9,
-                    children: source.data.entries.map((entry) {
-                      final meta = _metricMeta(entry.key);
-                      return Container(
-                        margin: const EdgeInsets.all(6),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: meta.color.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: meta.color.withValues(alpha: 0.35),
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(meta.icon, size: 22, color: meta.color),
-                            const SizedBox(height: 6),
-                            Text(
-                              meta.label,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
+                ? LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 360;
+                      final crossAxisCount = compact ? 2 : 3;
+                      final labelSize = compact ? 12.0 : 13.0;
+                      final valueSize = compact ? 15.0 : 16.0;
+                      final iconSize = compact ? 24.0 : 28.0;
+                      return GridView.count(
+                        crossAxisCount: crossAxisCount,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        childAspectRatio: compact ? 1.45 : 1.02,
+                        children: source.data.entries.map((entry) {
+                          final meta = _metricMeta(entry.key);
+                          return Container(
+                            margin: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: meta.color.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: meta.color.withValues(alpha: 0.35),
                               ),
                             ),
-                            const SizedBox(height: 3),
-                            Text(
-                              entry.value,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: meta.color,
-                              ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  meta.icon,
+                                  size: iconSize,
+                                  color: meta.color,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  meta.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: labelSize,
+                                    color: Colors.grey.shade700,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    entry.value,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: valueSize,
+                                      color: meta.color,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        }).toList(),
                       );
-                    }).toList(),
+                    },
                   )
                 : const Text(
                     'Esta fuente no tiene cobertura disponible para la ubicación seleccionada.',
