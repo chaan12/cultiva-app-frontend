@@ -89,15 +89,15 @@ class _CultivaBottomNavState extends State<CultivaBottomNav> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          navItem(icon: Icons.home_outlined, label: "Inicio", index: 0),
+          navItem(icon: Icons.home_outlined, label: 'Inicio', index: 0),
           navItem(
             icon: Icons.list_alt_outlined,
-            label: "Mis Cultivos",
+            label: 'Mis Cultivos',
             index: 1,
           ),
-          navItem(icon: Icons.spa_outlined, label: "Catálogo", index: 2),
-          navItem(icon: Icons.cloud_outlined, label: "Clima", index: 3),
-          navItem(icon: Icons.settings_outlined, label: "Config", index: 4),
+          navItem(icon: Icons.spa_outlined, label: 'Catálogo', index: 2),
+          navItem(icon: Icons.cloud_outlined, label: 'Clima', index: 3),
+          navItem(icon: Icons.settings_outlined, label: 'Config', index: 4),
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/routes/main_navigation.dart';
 import '../../../shared/state/app_scope.dart';
+import '../../../shared/state/app_store.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
 import '../../crop_details/screens/crop_details_screen.dart';
 import '../../crop_tracking/services/crop_tracking_service.dart';
@@ -291,7 +292,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, dynamic store) {
+  Widget _buildHeader(BuildContext context, AppStore store) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),

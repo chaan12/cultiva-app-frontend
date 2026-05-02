@@ -33,12 +33,22 @@ class LocalDatabaseService {
     if (raw == null || raw.isEmpty) {
       return <CropRecord>[];
     }
-    final decoded = jsonDecode(raw) as List<dynamic>;
-    final crops = decoded
-        .map((item) => CropRecord.fromMap(item as Map<String, dynamic>))
-        .toList();
-    crops.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return crops;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List<dynamic>) {
+        await _prefs.remove(_cropsKey);
+        return <CropRecord>[];
+      }
+      final crops = decoded
+          .whereType<Map<String, dynamic>>()
+          .map(CropRecord.fromMap)
+          .toList();
+      crops.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return crops;
+    } catch (_) {
+      await _prefs.remove(_cropsKey);
+      return <CropRecord>[];
+    }
   }
 
   Future<void> saveCrop(CropRecord crop) async {
@@ -69,8 +79,17 @@ class LocalDatabaseService {
     if (raw == null || raw.isEmpty) {
       return AppSettings.defaults();
     }
-    final values = jsonDecode(raw) as Map<String, dynamic>;
-    return AppSettings.fromMap(values);
+    try {
+      final values = jsonDecode(raw);
+      if (values is! Map<String, dynamic>) {
+        await _prefs.remove(_settingsKey);
+        return AppSettings.defaults();
+      }
+      return AppSettings.fromMap(values);
+    } catch (_) {
+      await _prefs.remove(_settingsKey);
+      return AppSettings.defaults();
+    }
   }
 
   Future<void> saveSettings(AppSettings settings) async {
@@ -82,8 +101,17 @@ class LocalDatabaseService {
     if (raw == null || raw.isEmpty) {
       return null;
     }
-    final decoded = jsonDecode(raw) as Map<String, dynamic>;
-    return WeatherSnapshot.fromMap(decoded, isFromCache: true);
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) {
+        await _prefs.remove(_weatherKey);
+        return null;
+      }
+      return WeatherSnapshot.fromMap(decoded, isFromCache: true);
+    } catch (_) {
+      await _prefs.remove(_weatherKey);
+      return null;
+    }
   }
 
   Future<void> saveWeather(WeatherSnapshot weather) async {

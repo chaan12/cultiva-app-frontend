@@ -44,7 +44,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     String successMessage,
   ) async {
     try {
-      debugPrint('[ConfiguracionScreen] Ejecutando cambio: $successMessage');
       await action();
       if (!mounted) {
         return;
@@ -64,9 +63,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         color: Colors.redAccent,
         icon: Icons.location_off_outlined,
       );
-      debugPrint('[ConfiguracionScreen] Error de ubicación: ${error.message}');
     } catch (error) {
-      debugPrint('[ConfiguracionScreen] Error al guardar ajuste: $error');
       if (!mounted) {
         return;
       }
@@ -248,17 +245,11 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                           onChanged: (value) => _toggleSetting(
                             () async {
                               if (value) {
-                                debugPrint(
-                                  '[ConfiguracionScreen] Activando geolocalización automática',
-                                );
                                 await store.refreshCurrentLocation();
                                 _locationController.text =
                                     store.settings.locationName;
                                 return;
                               }
-                              debugPrint(
-                                '[ConfiguracionScreen] Desactivando geolocalización automática',
-                              );
                               await store.updateSettings(
                                 settings.copyWith(autoLocation: false),
                               );
@@ -355,9 +346,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                       onPressed: store.isBusy
                                           ? null
                                           : () => _toggleSetting(() async {
-                                              debugPrint(
-                                                '[ConfiguracionScreen] Tap en detectar ubicación actual',
-                                              );
                                               await store
                                                   .refreshCurrentLocation();
                                               _locationController.text =
@@ -390,9 +378,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                     ? null
                                     : () {
                                         final value = _selectedLocation;
-                                        debugPrint(
-                                          '[ConfiguracionScreen] Guardando ubicación manual: ${value?.label}',
-                                        );
                                         if (value == null) {
                                           showCultivaSnackBar(
                                             context,

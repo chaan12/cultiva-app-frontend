@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/models/crop_record.dart';
 import '../../../shared/state/app_scope.dart';
+import '../../../shared/state/app_store.dart';
 import '../../crop_register/screens/crop_register_screen.dart';
 import '../../crop_tracking/screens/crop_tracking_screen.dart';
 import '../../crop_tracking/services/crop_tracking_service.dart';
 import '../widgets/crop_record_card.dart';
 
-class MisCultivosScreen extends StatelessWidget {
-  const MisCultivosScreen({super.key});
+class MyCropsScreen extends StatelessWidget {
+  const MyCropsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +114,7 @@ class MisCultivosScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, dynamic store) {
+  Widget _buildHeader(BuildContext context, AppStore store) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
@@ -250,7 +251,7 @@ class MisCultivosScreen extends StatelessWidget {
 
   Future<void> _markCropCompleted(
     BuildContext context,
-    dynamic store,
+    AppStore store,
     CropRecord crop,
   ) async {
     final confirmed = await showDialog<bool>(
@@ -285,7 +286,7 @@ class MisCultivosScreen extends StatelessWidget {
 
   Future<void> _deleteCrop(
     BuildContext context,
-    dynamic store,
+    AppStore store,
     CropRecord crop,
   ) async {
     final confirmed = await showDialog<bool>(

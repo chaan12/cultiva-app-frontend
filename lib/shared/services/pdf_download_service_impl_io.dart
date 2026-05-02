@@ -10,8 +10,16 @@ Future<void> savePdfBytes({
   required Uint8List bytes,
   required String fileName,
 }) async {
+  final safeFileName = fileName
+      .split((r'[/\\]'))
+      .last
+      .replaceAll((r'[^A-Za-z0-9._-]'), '_');
+  if (safeFileName.isEmpty) {
+    throw const PdfDownloadException('Nombre de PDF inválido.');
+  }
+
   final directory = await getTemporaryDirectory();
-  final file = File('${directory.path}/$fileName');
+  final file = File('${directory.path}/$safeFileName');
   await file.writeAsBytes(bytes, flush: true);
   final result = await OpenFilex.open(file.path);
   if (result.type != ResultType.done) {

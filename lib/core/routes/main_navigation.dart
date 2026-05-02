@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../features/dashboard/screens/dashboard_screen.dart';
-import '../../features/my_crops/screens/my_crops_scree.dart';
+import '../../features/my_crops/screens/my_crops_screen.dart';
 import '../../features/crops_catalog/screens/crops_catalog_screen.dart';
 import '../../features/weather/screens/weather_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
@@ -24,7 +24,7 @@ class MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> pages = [
     const DashboardScreen(),
-    const MisCultivosScreen(),
+    const MyCropsScreen(),
     const CatalogoScreen(),
     const ClimaScreen(),
     const ConfiguracionScreen(),
@@ -41,17 +41,13 @@ class MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-  return Scaffold(
-    body: SafeArea(
-      child: IndexedStack(
-        index: currentIndex,
-        children: pages,
+    return Scaffold(
+      body: SafeArea(
+        child: IndexedStack(index: currentIndex, children: pages),
       ),
-    ),
-    bottomNavigationBar: SafeArea(child: CultivaBottomNav(
-      currentIndex: currentIndex,
-      onTap: goToTab,
-    )),
-  );
-}
+      bottomNavigationBar: SafeArea(
+        child: CultivaBottomNav(currentIndex: currentIndex, onTap: goToTab),
+      ),
+    );
+  }
 }

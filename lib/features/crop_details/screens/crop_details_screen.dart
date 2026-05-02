@@ -590,7 +590,7 @@ class CropDetailsScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: AppColors.greenDark),
           const SizedBox(width: 10),
-          Flexible( 
+          Flexible(
             child: Text(
               text,
               style: const TextStyle(height: 1.4),

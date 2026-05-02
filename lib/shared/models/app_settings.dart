@@ -57,6 +57,15 @@ class AppSettings {
       return null;
     }
 
+    String readString(String key, String fallback) {
+      final value = map[key];
+      if (value is! String) {
+        return fallback;
+      }
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? fallback : trimmed;
+    }
+
     return AppSettings(
       weatherAlerts: readBool('weatherAlerts', defaults.weatherAlerts),
       cropAlerts: readBool('cropAlerts', defaults.cropAlerts),
@@ -66,7 +75,7 @@ class AppSettings {
       droughtAlerts: readBool('droughtAlerts', defaults.droughtAlerts),
       heatAlerts: readBool('heatAlerts', defaults.heatAlerts),
       autoLocation: readBool('autoLocation', defaults.autoLocation),
-      locationName: (map['locationName'] as String?) ?? defaults.locationName,
+      locationName: readString('locationName', defaults.locationName),
       latitude: readDouble('latitude'),
       longitude: readDouble('longitude'),
     );

@@ -8,6 +8,5 @@ void main() {
     await tester.pumpWidget(CultivaApp(store: AppStore()));
 
     expect(find.text('Cultiva+'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 4));
   });
 }

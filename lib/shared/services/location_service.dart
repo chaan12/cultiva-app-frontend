@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -6,31 +5,23 @@ import '../models/app_location.dart';
 
 class LocationService {
   Future<AppLocation> getCurrentLocation() async {
-    debugPrint('[LocationService] Iniciando lectura de ubicación actual');
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    debugPrint('[LocationService] GPS habilitado: $serviceEnabled');
     if (!serviceEnabled) {
       throw LocationException('Activa el GPS del dispositivo para continuar.');
     }
 
     var permission = await Geolocator.checkPermission();
-    debugPrint('[LocationService] Permiso inicial: $permission');
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      debugPrint('[LocationService] Permiso tras solicitarlo: $permission');
     }
 
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      debugPrint('[LocationService] Permiso rechazado: $permission');
       throw LocationException('No se otorgó permiso de ubicación.');
     }
 
     final position = await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    );
-    debugPrint(
-      '[LocationService] Posición obtenida lat=${position.latitude}, lng=${position.longitude}',
     );
 
     var label = 'Ubicación actual';
@@ -54,9 +45,8 @@ class LocationService {
       ]);
       final pieces = <String>[city, if (state != null && state != city) state];
       label = pieces.isEmpty ? label : pieces.join(', ');
-      debugPrint('[LocationService] Reverse geocoding exitoso: $label');
-    } catch (error) {
-      debugPrint('[LocationService] Reverse geocoding falló: $error');
+    } catch (_) {
+      label = 'Ubicación actual';
     }
 
     return AppLocation(
@@ -67,20 +57,25 @@ class LocationService {
   }
 
   Future<AppLocation> geocode(String query) async {
-    debugPrint('[LocationService] Geocodificando ubicación manual: $query');
-    final locations = await locationFromAddress(query);
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) {
+      throw LocationException('Ingresa una ubicación válida.');
+    }
+
+    final List<Location> locations;
+    try {
+      locations = await locationFromAddress(normalizedQuery);
+    } catch (_) {
+      throw LocationException('No se pudo validar la ubicación indicada.');
+    }
     if (locations.isEmpty) {
-      debugPrint('[LocationService] Sin resultados para: $query');
       throw LocationException('No se encontró la ubicación indicada.');
     }
     final location = locations.first;
-    debugPrint(
-      '[LocationService] Geocoding manual exitoso lat=${location.latitude}, lng=${location.longitude}',
-    );
     return AppLocation(
       latitude: location.latitude,
       longitude: location.longitude,
-      label: query,
+      label: normalizedQuery,
     );
   }
 

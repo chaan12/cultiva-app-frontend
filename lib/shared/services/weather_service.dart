@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../../core/config/app_config.dart';
 import '../models/weather_snapshot.dart';
 
 class WeatherService {
@@ -49,6 +50,13 @@ class WeatherService {
     required double longitude,
     required String locationLabel,
   }) async {
+    if (!_isValidCoordinate(latitude, min: -90, max: 90) ||
+        !_isValidCoordinate(longitude, min: -180, max: 180)) {
+      throw const WeatherException(
+        'Coordenadas inválidas para consultar clima.',
+      );
+    }
+
     final providerResponses = await Future.wait(
       _providers.map(
         (provider) => _fetchProvider(
@@ -122,7 +130,7 @@ class WeatherService {
     required double latitude,
     required double longitude,
   }) async {
-    final uri = Uri.https('api.open-meteo.com', provider.endpointPath, <
+    final uri = Uri.https(AppConfig.weatherApiHost, provider.endpointPath, <
       String,
       String
     >{
@@ -139,7 +147,7 @@ class WeatherService {
     });
 
     try {
-      final response = await http.get(uri);
+      final response = await http.get(uri).timeout(AppConfig.requestTimeout);
       if (response.statusCode != 200) {
         return _ProviderFetchResult(
           config: provider,
@@ -147,7 +155,14 @@ class WeatherService {
         );
       }
 
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        return _ProviderFetchResult(
+          config: provider,
+          errorMessage: 'Respuesta inválida',
+        );
+      }
+      final json = decoded;
       if ((json['error'] as bool?) ?? false) {
         return _ProviderFetchResult(
           config: provider,
@@ -158,10 +173,10 @@ class WeatherService {
         config: provider,
         snapshot: _parseProviderWeather(json),
       );
-    } catch (error) {
+    } catch (_) {
       return _ProviderFetchResult(
         config: provider,
-        errorMessage: error.toString(),
+        errorMessage: 'No disponible',
       );
     }
   }
@@ -445,6 +460,14 @@ class WeatherService {
       return value.toInt();
     }
     return 0;
+  }
+
+  bool _isValidCoordinate(
+    double value, {
+    required double min,
+    required double max,
+  }) {
+    return value.isFinite && value >= min && value <= max;
   }
 
   bool _hasCurrentValue(Map<String, dynamic> current, String key) {

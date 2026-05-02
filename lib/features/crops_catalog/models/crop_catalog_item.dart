@@ -5,7 +5,6 @@ class CropCatalogItem {
     required this.id,
     required this.name,
     required this.imageAsset,
-    required this.heroImageUrl,
     required this.season,
     required this.sowingWindow,
     required this.harvestWindow,
@@ -29,7 +28,6 @@ class CropCatalogItem {
   final String id;
   final String name;
   final String imageAsset;
-  final String heroImageUrl;
   final String season;
   final String sowingWindow;
   final String harvestWindow;

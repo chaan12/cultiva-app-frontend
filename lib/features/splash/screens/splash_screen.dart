@@ -1,7 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+
 import '../../../core/routes/main_navigation.dart';
+import '../../../core/theme/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,16 +13,27 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Timer? _navigationTimer;
+
   @override
   void initState() {
     super.initState();
 
-    Timer(const Duration(seconds: 3), () {
+    _navigationTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) {
+        return;
+      }
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainNavigation()),
       );
     });
+  }
+
+  @override
+  void dispose() {
+    _navigationTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -31,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/logos/cultiva_logo.png", width: 240),
+            Image.asset('assets/logos/cultiva_logo.png', width: 240),
 
             const SizedBox(height: 20),
 
@@ -40,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 colors: [AppColors.greenDark, AppColors.greenPrimary],
               ).createShader(bounds),
               child: const Text(
-                "Cultiva+",
+                'Cultiva+',
                 style: TextStyle(
                   fontSize: 46,
                   fontWeight: FontWeight.w900,

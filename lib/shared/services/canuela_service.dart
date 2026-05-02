@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../../core/config/app_config.dart';
 import '../models/canuela_forecast.dart';
 
 class CanuelaService {
   static const String sourceName = 'Lectura tradicional';
+  static const String _archivePath = '/v1/archive';
 
   Future<CanuelaReport> fetchCanuelas({
     required double latitude,
@@ -13,10 +15,17 @@ class CanuelaService {
     required String locationLabel,
     int? year,
   }) async {
+    if (!_isValidCoordinate(latitude, min: -90, max: 90) ||
+        !_isValidCoordinate(longitude, min: -180, max: 180)) {
+      throw const CanuelaException(
+        'Coordenadas inválidas para consultar cabañuelas.',
+      );
+    }
+
     final selectedYear = year ?? _defaultCanuelaYear(DateTime.now());
     final startDate = '$selectedYear-01-01';
     final endDate = '$selectedYear-01-12';
-    final uri = Uri.https('archive-api.open-meteo.com', '/v1/archive', {
+    final uri = Uri.https(AppConfig.historicalWeatherApiHost, _archivePath, {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
       'start_date': startDate,
@@ -26,20 +35,47 @@ class CanuelaService {
           'weather_code,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum',
     });
 
-    final response = await http.get(uri);
-    if (response.statusCode != 200) {
-      throw CanuelaException(
-        'La fuente histórica respondió con HTTP ${response.statusCode}.',
+    try {
+      final response = await http.get(uri).timeout(AppConfig.requestTimeout);
+      if (response.statusCode != 200) {
+        throw CanuelaException(
+          'La fuente histórica respondió con HTTP ${response.statusCode}.',
+        );
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw const CanuelaException(
+          'La fuente histórica devolvió una respuesta inválida.',
+        );
+      }
+      final json = decoded;
+      if ((json['error'] as bool?) ?? false) {
+        throw CanuelaException(
+          (json['reason'] as String?) ??
+              'No fue posible consultar las cabañuelas.',
+        );
+      }
+
+      return _buildReport(
+        json: json,
+        locationLabel: locationLabel,
+        selectedYear: selectedYear,
+      );
+    } on CanuelaException {
+      rethrow;
+    } catch (_) {
+      throw const CanuelaException(
+        'No fue posible consultar las cabañuelas en este momento.',
       );
     }
+  }
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    if ((json['error'] as bool?) ?? false) {
-      throw CanuelaException(
-        (json['reason'] as String?) ?? 'No fue posible consultar las cañuelas.',
-      );
-    }
-
+  CanuelaReport _buildReport({
+    required Map<String, dynamic> json,
+    required String locationLabel,
+    required int selectedYear,
+  }) {
     final daily = json['daily'] as Map<String, dynamic>? ?? <String, dynamic>{};
     final dates = (daily['time'] as List<dynamic>? ?? const <dynamic>[])
         .map((item) => item.toString())
@@ -144,6 +180,14 @@ class CanuelaService {
       return int.tryParse(value) ?? 0;
     }
     return 0;
+  }
+
+  bool _isValidCoordinate(
+    double value, {
+    required double min,
+    required double max,
+  }) {
+    return value.isFinite && value >= min && value <= max;
   }
 
   String _monthName(int month) {

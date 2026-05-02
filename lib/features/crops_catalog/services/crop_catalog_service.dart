@@ -10,8 +10,6 @@ class CropCatalogService {
       id: 'maiz',
       name: 'Maíz',
       imageAsset: 'assets/images/CUL - maiz.png',
-      heroImageUrl:
-          'https://images.unsplash.com/photo-1691326564837-51e3619f1d70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
       season: 'Primavera-Verano',
       sowingWindow: 'Abril - Junio',
       harvestWindow: 'Agosto - Octubre',
@@ -44,8 +42,6 @@ class CropCatalogService {
       id: 'tomate',
       name: 'Tomate',
       imageAsset: 'assets/images/CUL - tomate.png',
-      heroImageUrl:
-          'https://images.unsplash.com/photo-1683008952375-410ae668e6b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
       season: 'Todo el año',
       sowingWindow: 'Todo el año (bajo riego)',
       harvestWindow: '75-90 días después de trasplante',
@@ -79,8 +75,6 @@ class CropCatalogService {
       id: 'sorgo',
       name: 'Sorgo',
       imageAsset: 'assets/images/CUL - sorgo.png',
-      heroImageUrl:
-          'https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
       season: 'Verano - Otoño',
       sowingWindow: 'Junio - Agosto',
       harvestWindow: 'Octubre - Diciembre',
@@ -113,8 +107,6 @@ class CropCatalogService {
       id: 'trigo',
       name: 'Trigo',
       imageAsset: 'assets/images/CUL - trigo.png',
-      heroImageUrl:
-          'https://images.unsplash.com/photo-1500382017468-9049fed747ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
       season: 'Otoño - Invierno',
       sowingWindow: 'Noviembre - Enero',
       harvestWindow: 'Marzo - Mayo',
@@ -143,8 +135,6 @@ class CropCatalogService {
       id: 'zanahoria',
       name: 'Zanahoria',
       imageAsset: 'assets/images/CUL - zanahoria.png',
-      heroImageUrl:
-          'https://images.unsplash.com/photo-1447175008436-054170c2e979?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
       season: 'Invierno - Primavera',
       sowingWindow: 'Octubre - Febrero',
       harvestWindow: 'Enero - Mayo',
@@ -173,8 +163,6 @@ class CropCatalogService {
       id: 'soja',
       name: 'Soja',
       imageAsset: 'assets/images/CUL - soja.png',
-      heroImageUrl:
-          'https://images.unsplash.com/photo-1471193945509-9ad0617afabf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
       season: 'Primavera - Verano',
       sowingWindow: 'Mayo - Julio',
       harvestWindow: 'Septiembre - Noviembre',
