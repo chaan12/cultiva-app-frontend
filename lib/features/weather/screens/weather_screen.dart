@@ -668,10 +668,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(
+                child: const Text(
                   '24H',
                   style: TextStyle(
-                    color: color,
+                    color: Colors.black54,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -687,15 +687,29 @@ class _ClimaScreenState extends State<ClimaScreen> {
   }
 
   Widget _temperatureChart(List<HourlyWeatherPoint> points) {
+    if (points.isEmpty) return const SizedBox.shrink();
+
+    final temps = points.map((p) => p.temperatureC).toList();
+    final minTemp = temps.reduce((a, b) => a < b ? a : b);
+    final maxTemp = temps.reduce((a, b) => a > b ? a : b);
+
+    // Round to nearest 5 for cleaner axes
+    final chartMin = (minTemp / 5).floorToDouble() * 5 - 5;
+    final chartMax = (maxTemp / 5).ceilToDouble() * 5 + 5;
+
     return LineChart(
       LineChartData(
+        minY: chartMin,
+        maxY: chartMax,
+        minX: -0.5,
+        maxX: points.length - 0.5,
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (value) =>
               FlLine(color: Colors.black12, strokeWidth: 1),
         ),
-        titlesData: _titlesData(points),
+        titlesData: _titlesData(points, showLeftTitles: true, leftInterval: 5),
         borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(
@@ -757,6 +771,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
     return BarChart(
       BarChartData(
         maxY: maxRain < 1 ? 1 : maxRain * 1.35,
+        minY: 0,
         alignment: BarChartAlignment.spaceAround,
         gridData: FlGridData(
           show: true,
@@ -766,7 +781,11 @@ class _ClimaScreenState extends State<ClimaScreen> {
             strokeWidth: 1,
           ),
         ),
-        titlesData: _titlesData(points, showLeftTitles: true),
+        titlesData: _titlesData(
+          points,
+          showLeftTitles: true,
+          leftInterval: maxRain < 2 ? 0.5 : (maxRain / 4).ceilToDouble(),
+        ),
         borderData: FlBorderData(show: false),
         barGroups: points
             .asMap()
@@ -798,8 +817,12 @@ class _ClimaScreenState extends State<ClimaScreen> {
   Widget _humidityChart(List<HourlyWeatherPoint> points) {
     return LineChart(
       LineChartData(
+        minY: 0,
+        maxY: 105,
+        minX: -0.5,
+        maxX: points.length - 0.5,
         gridData: FlGridData(show: true, drawVerticalLine: false),
-        titlesData: _titlesData(points),
+        titlesData: _titlesData(points, showLeftTitles: true, leftInterval: 20),
         borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(
@@ -838,8 +861,11 @@ class _ClimaScreenState extends State<ClimaScreen> {
         Expanded(
           child: LineChart(
             LineChartData(
+              minY: 0,
+              minX: -0.5,
+              maxX: points.length - 0.5,
               gridData: FlGridData(show: true, drawVerticalLine: false),
-              titlesData: _titlesData(points),
+              titlesData: _titlesData(points, showLeftTitles: true, leftInterval: 10),
               borderData: FlBorderData(show: false),
               lineBarsData: [
                 LineChartBarData(
@@ -885,21 +911,33 @@ class _ClimaScreenState extends State<ClimaScreen> {
   FlTitlesData _titlesData(
     List<HourlyWeatherPoint> points, {
     bool showLeftTitles = false,
+    double? leftInterval,
   }) {
     return FlTitlesData(
-      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      rightTitles: const AxisTitles(
+        sideTitles: SideTitles(showTitles: false, reservedSize: 10),
+      ),
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: showLeftTitles,
-          reservedSize: showLeftTitles ? 34 : 0,
-          interval: showLeftTitles ? 0.5 : null,
+          reservedSize: showLeftTitles ? 36 : 0,
+          interval: leftInterval,
           getTitlesWidget: (value, meta) {
             if (!showLeftTitles) {
               return const SizedBox.shrink();
             }
-            return Text(
-              value.toStringAsFixed(value >= 1 ? 0 : 1),
-              style: const TextStyle(color: Colors.grey, fontSize: 10),
+            // Avoid drawing labels too close to each other or duplicates at boundaries
+            if (value == meta.max && value % (leftInterval ?? 1) != 0) {
+              return const SizedBox.shrink();
+            }
+
+            return SideTitleWidget(
+              meta: meta,
+              space: 8,
+              child: Text(
+                value.toStringAsFixed(value >= 10 ? 0 : 1),
+                style: const TextStyle(color: Colors.grey, fontSize: 10),
+              ),
             );
           },
         ),
@@ -908,8 +946,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
-          reservedSize: 26,
-          interval: 6,
+          reservedSize: 30,
+          interval: points.length > 24 ? 8 : 6,
           getTitlesWidget: (value, meta) {
             final index = value.toInt();
             if (index < 0 ||
@@ -917,9 +955,13 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 value != index.toDouble()) {
               return const SizedBox.shrink();
             }
-            return Text(
-              points[index].label,
-              style: const TextStyle(color: Colors.grey, fontSize: 10),
+            return SideTitleWidget(
+              meta: meta,
+              space: 8,
+              child: Text(
+                points[index].label,
+                style: const TextStyle(color: Colors.grey, fontSize: 10),
+              ),
             );
           },
         ),
@@ -1132,7 +1174,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
                         crossAxisCount: crossAxisCount,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        childAspectRatio: compact ? 1.45 : 1.02,
+                        childAspectRatio: compact ? 1.25 : 0.95,
                         children: source.data.entries.map((entry) {
                           final meta = _metricMeta(entry.key);
                           return Container(
