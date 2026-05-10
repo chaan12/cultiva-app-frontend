@@ -4,6 +4,8 @@ import '../../../shared/models/crop_record.dart';
 import '../models/crop_tracking_models.dart';
 import '../services/crop_tracking_service.dart';
 
+import '../../my_crops/screens/crop_edit_screen.dart';
+
 class CropTrackingScreen extends StatefulWidget {
   const CropTrackingScreen({super.key, required this.crop});
 
@@ -14,10 +16,17 @@ class CropTrackingScreen extends StatefulWidget {
 }
 
 class _CropTrackingScreenState extends State<CropTrackingScreen> {
+  late CropRecord _crop;
   bool notifications = true;
   String activeTab = 'timeline';
 
-  CropTrackingPlan get _plan => CropTrackingService.buildPlan(widget.crop);
+  @override
+  void initState() {
+    super.initState();
+    _crop = widget.crop;
+  }
+
+  CropTrackingPlan get _plan => CropTrackingService.buildPlan(_crop);
 
   @override
   Widget build(BuildContext context) {
@@ -65,15 +74,25 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.chevron_left, color: Colors.white, size: 32),
-            padding: EdgeInsets.zero,
-            alignment: Alignment.centerLeft,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.chevron_left, color: Colors.white, size: 32),
+                padding: EdgeInsets.zero,
+                alignment: Alignment.centerLeft,
+              ),
+              IconButton(
+                onPressed: _editCrop,
+                icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 28),
+                tooltip: 'Editar cultivo',
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           Text(
-            widget.crop.name,
+            _crop.name,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 32,
@@ -81,8 +100,12 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
             ),
           ),
           Text(
-            '${widget.crop.formattedArea} • Día ${widget.crop.daysSinceSowing}/${widget.crop.cycleDays}',
+            '${_crop.formattedArea} • Día ${_crop.daysSinceSowing}/${_crop.cycleDays}',
             style: const TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+          Text(
+            _crop.locationName,
+            style: const TextStyle(color: Colors.white60, fontSize: 12),
           ),
           const SizedBox(height: 25),
           Container(
@@ -140,6 +163,16 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _editCrop() async {
+    final updated = await Navigator.push<CropRecord>(
+      context,
+      MaterialPageRoute(builder: (_) => CropEditScreen(crop: _crop)),
+    );
+    if (updated != null && mounted) {
+      setState(() => _crop = updated);
+    }
   }
 
   Widget _buildNotificationToggle() {

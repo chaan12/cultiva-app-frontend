@@ -189,6 +189,13 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateCrop(CropRecord crop) async {
+    await initialize();
+    await _databaseService.saveCrop(crop);
+    _crops = await _databaseService.loadCrops();
+    notifyListeners();
+  }
+
   Future<void> completeCrop(String cropId) async {
     await initialize();
     CropRecord? crop;

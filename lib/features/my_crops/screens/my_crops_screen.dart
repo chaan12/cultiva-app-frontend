@@ -7,6 +7,7 @@ import '../../crop_register/screens/crop_register_screen.dart';
 import '../../crop_tracking/screens/crop_tracking_screen.dart';
 import '../../crop_tracking/services/crop_tracking_service.dart';
 import '../widgets/crop_record_card.dart';
+import 'crop_edit_screen.dart';
 
 class MyCropsScreen extends StatelessWidget {
   const MyCropsScreen({super.key});
@@ -73,6 +74,7 @@ class MyCropsScreen extends StatelessWidget {
                           onComplete: () =>
                               _markCropCompleted(context, store, crop),
                           onDelete: () => _deleteCrop(context, store, crop),
+                          onEdit: () => _editCrop(context, crop),
                         );
                       },
                     ),
@@ -318,6 +320,13 @@ class MyCropsScreen extends StatelessWidget {
         context,
       ).showSnackBar(SnackBar(content: Text('${crop.name} eliminado.')));
     }
+  }
+
+  void _editCrop(BuildContext context, CropRecord crop) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CropEditScreen(crop: crop)),
+    );
   }
 
   void _showHistory(BuildContext context, List<CropRecord> history) {

@@ -10,12 +10,14 @@ class CropRecordCard extends StatelessWidget {
     required this.onTap,
     this.onComplete,
     this.onDelete,
+    this.onEdit,
   });
 
   final CropRecord crop;
   final VoidCallback onTap;
   final VoidCallback? onComplete;
   final VoidCallback? onDelete;
+  final VoidCallback? onEdit;
 
   Color get _statusColor {
     switch (CropTrackingService.buildSummary(crop).status) {
@@ -115,6 +117,9 @@ class CropRecordCard extends StatelessWidget {
                           color: Colors.black54,
                         ),
                         onSelected: (value) {
+                          if (value == 'edit') {
+                            onEdit?.call();
+                          }
                           if (value == 'complete') {
                             onComplete?.call();
                           }
@@ -123,15 +128,41 @@ class CropRecordCard extends StatelessWidget {
                           }
                         },
                         itemBuilder: (context) => [
+                          if (onEdit != null)
+                            const PopupMenuItem<String>(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit_outlined, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('Editar cultivo'),
+                                ],
+                              ),
+                            ),
                           if (onComplete != null)
                             const PopupMenuItem<String>(
                               value: 'complete',
-                              child: Text('Marcar como completado'),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.check_circle_outline, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('Marcar como completado'),
+                                ],
+                              ),
                             ),
                           if (onDelete != null)
                             const PopupMenuItem<String>(
                               value: 'delete',
-                              child: Text('Borrar cultivo'),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_outline,
+                                      size: 20, color: Colors.redAccent),
+                                  SizedBox(width: 8),
+                                  Text('Borrar cultivo',
+                                      style:
+                                          TextStyle(color: Colors.redAccent)),
+                                ],
+                              ),
                             ),
                         ],
                       ),
