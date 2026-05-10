@@ -554,12 +554,7 @@ class _MonthSignalTile extends StatelessWidget {
             _rainPlainLabel(month.precipitationMm),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _monthMood(month),
-            style: const TextStyle(color: Colors.black54, fontSize: 12),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5),
           ),
           const SizedBox(height: 8),
           ClipRRect(
@@ -713,8 +708,8 @@ class _MonthCard extends StatelessWidget {
           _RainIntensityBar(
             value: rainRatio,
             color: signalColor,
-            label: 'Señal de lluvia',
-            amount: _rainPlainLabel(month.precipitationMm),
+            label: 'Intensidad de señal',
+            amount: '',
           ),
           const SizedBox(height: 14),
           Row(

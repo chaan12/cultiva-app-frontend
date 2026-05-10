@@ -907,7 +907,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
       ],
     );
   }
-
+ 
   FlTitlesData _titlesData(
     List<HourlyWeatherPoint> points, {
     bool showLeftTitles = false,
