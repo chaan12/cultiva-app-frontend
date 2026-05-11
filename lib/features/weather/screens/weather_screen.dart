@@ -135,10 +135,13 @@ class _ClimaScreenState extends State<ClimaScreen> {
               ),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
-              Icons.auto_awesome,
-              color: Colors.white,
-              size: 28,
+            child: Center(
+              child: Image.asset(
+                'assets/icons/cabanuelas.png',
+                width: 38,
+                height: 38,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
           const SizedBox(width: 14),

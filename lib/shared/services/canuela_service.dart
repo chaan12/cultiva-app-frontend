@@ -236,19 +236,19 @@ class _ClimateInterpreter {
     // 5. Determinar Ambiente (Condition)
     String condition;
     if (isMuggy) {
-      condition = 'Ambiente pesado y bochornoso';
+      condition = 'Ambiente con bochorno';
     } else if (isDryHeat) {
       condition = 'Calor dominante y seco';
     } else if (isExtremeHot) {
-      condition = 'Días de mucho sol y bochorno';
+      condition = 'Días de mucho calor';
     } else if (isCold) {
-      condition = 'Mes de mucha frescura y aire';
+      condition = 'Mes de mucho frío y aire';
     } else if (isCool) {
-      condition = 'Se nota un ambiente fresco';
+      condition = 'Se espera un ambiente fresco';
     } else if (isRestless && rainScore < 2) {
       condition = 'Tiempo revuelto y variable';
     } else if (rainScore >= 5) {
-      condition = 'Días de humedad y nubes';
+      condition = 'Días húmedos y con nubes';
     } else {
       condition = 'Tiempo estable y tranquilo';
     }
@@ -256,19 +256,19 @@ class _ClimateInterpreter {
     // 6. Generar Consejo (Crop Hint)
     String hint;
     if (rainScore >= 10) {
-      hint = 'Viene agua fuerte: ojo con el encharque y cuida que la raíz no sufra por tanta humedad.';
+      hint = 'Vienen lluvias fuertes: cuidado con los encharques y cuida que las raices no sufran por tanta humedad.';
     } else if (rainScore >= 4) {
-      hint = 'Mes de buena humedad: aprovecha para sembrar lo que pide agua, pero vigila la maleza.';
+      hint = 'Mes de buena humedad: aprovecha para sembrar lo que necesita agua, pero cuidado con la maleza creciente.';
     } else if (isDryHeat || isExtremeHot) {
-      hint = 'La tierra va a pedir descanso y agua: protege el suelo con rastrojo para que el sol no lo queme.';
+      hint = 'Se esperan días con calor muy fuerte. Riega las plantas frecuentemente y vigila que no se marchiten.';
     } else if (isCold || isCool) {
-      hint = 'Días frescos: cuida tus plantitas más tiernas en las mañanas, que el aire frío las puede quemar.';
+      hint = 'Días frescos: cuida las plantas más débiles y aquellas que necesitan calor.';
     } else if (isRestless) {
-      hint = 'Tiempo de cambios: no te confíes del cielo, mantén tus herramientas a mano y vigila el viento.';
+      hint = 'El tiempo será muy variable, vigila el viento y otras señales meteorológicas.';
     } else if (rainScore < 1) {
-      hint = 'Mes seco: es buen tiempo para preparar la tierra y limpiar, pero no descuides el riego.';
+      hint = 'Mes sin muchas lluvias: es buen tiempo para preparar la tierra y limpiar, pero no descuides el riego.';
     } else {
-      hint = 'Se ve buen tiempo para el campo: mantén tus labores normales y observa cómo respira el cultivo.';
+      hint = 'Se ve buen tiempo para el campo: mantén tus labores normales.';
     }
 
     return _Interpretation(

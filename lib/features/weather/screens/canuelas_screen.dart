@@ -289,7 +289,7 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
               style: const TextStyle(
                 color: Color(0xFF3F392D),
                 height: 1.35,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w600
               ),
             ),
             const SizedBox(height: 16),
@@ -424,14 +424,17 @@ class _SummaryMetric extends StatelessWidget {
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w800,
-              fontSize: 16,
+              fontSize: 12,
             ),
           ),
           Text(
             label,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.black54, fontSize: 12),
+            style: const TextStyle(
+              color: Colors.black54,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
