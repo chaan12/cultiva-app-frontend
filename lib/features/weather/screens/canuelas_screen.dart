@@ -637,7 +637,6 @@ class _MonthCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final sourceDate = DateFormat('d MMM', 'es_MX').format(month.sourceDate);
     final signalColor = _signalColor(month.precipitationMm);
-    final rainRatio = (month.precipitationMm / maxRainMm).clamp(0.02, 1.0);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -684,32 +683,29 @@ class _MonthCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: signalColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  _rainPlainLabel(month.precipitationMm),
-                  style: TextStyle(
-                    color: signalColor,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 14),
-          _RainIntensityBar(
-            value: rainRatio,
-            color: signalColor,
-            label: 'Intensidad de señal',
-            amount: '',
+          Row(
+            children: [
+              const Text(
+                'Señal de agua',
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                _rainPlainLabel(month.precipitationMm),
+                style: TextStyle(
+                  color: signalColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           Row(
@@ -717,7 +713,7 @@ class _MonthCard extends StatelessWidget {
               Expanded(
                 child: _MiniMetric(
                   label: 'Ambiente',
-                  value: _monthMood(month),
+                  value: month.conditionLabel,
                   icon: Icons.cloud_outlined,
                 ),
               ),
@@ -759,60 +755,6 @@ class _MonthCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _RainIntensityBar extends StatelessWidget {
-  const _RainIntensityBar({
-    required this.value,
-    required this.color,
-    required this.label,
-    required this.amount,
-  });
-
-  final double value;
-  final Color color;
-  final String label;
-  final String amount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.black54,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              amount,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(99),
-          child: LinearProgressIndicator(
-            value: value,
-            minHeight: 10,
-            color: color,
-            backgroundColor: const Color(0xFFEFE8D8),
-          ),
-        ),
-      ],
     );
   }
 }
