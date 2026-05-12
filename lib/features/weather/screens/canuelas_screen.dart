@@ -712,15 +712,19 @@ class _MonthCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
+                flex: 2,
                 child: _MiniMetric(
                   label: 'Ambiente',
                   value: month.conditionLabel,
                   icon: Icons.cloud_outlined,
                 ),
               ),
+              const SizedBox(width: 8),
               Expanded(
+                flex: 1,
                 child: _MiniMetric(
                   label: 'Sensación',
                   value: _temperatureRangeLabel(month),
@@ -782,8 +786,6 @@ class _MiniMetric extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
         ),
         Text(
