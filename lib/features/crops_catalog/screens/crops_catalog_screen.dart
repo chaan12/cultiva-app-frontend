@@ -52,7 +52,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
         ),
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
         itemCount: items.length,
         itemBuilder: (context, index) {
           final item = items[index];
@@ -90,6 +90,16 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                         width: 90,
                         height: 90,
                         fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          width: 90,
+                          height: 90,
+                          color: item.badgeColor.withValues(alpha: 0.12),
+                          child: Icon(
+                            item.icon,
+                            color: item.badgeColor,
+                            size: 34,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),

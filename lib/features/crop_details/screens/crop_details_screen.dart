@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/services/pdf_download_service.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../../crop_register/screens/crop_register_screen.dart';
+import '../../crops_catalog/models/crop_catalog_item.dart';
 import '../../crops_catalog/services/crop_catalog_service.dart';
 
 class CropDetailsScreen extends StatelessWidget {
@@ -23,122 +24,7 @@ class CropDetailsScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 54, 20, 28),
-              decoration: const BoxDecoration(
-                color: AppColors.greenDark,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(36),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(Icons.arrow_back, color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.18),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                crop.season,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              crop.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 34,
-                                fontWeight: FontWeight.w900,
-                                height: 0.95,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              crop.description,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 15,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        width: 98,
-                        height: 118,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Image.asset(
-                          crop.imageAsset,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _heroMetric(
-                          label: 'Ciclo',
-                          value: '${crop.cycleDays} días',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _heroMetric(
-                          label: 'Temperatura',
-                          value: crop.idealTemperature,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _heroMetric(
-                          label: 'Rendimiento',
-                          value: crop.expectedYield,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            _buildHeroBanner(context, crop),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 34),
               child: Column(
@@ -341,9 +227,20 @@ class CropDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
                           onPressed: () async {
+                            final pdfAssetPath = crop.pdfAssetPath;
+                            if (pdfAssetPath == null) {
+                              showCultivaSnackBar(
+                                context,
+                                message:
+                                    'Ficha técnica no disponible para este cultivo.',
+                                color: Colors.orange,
+                                icon: Icons.info_outline,
+                              );
+                              return;
+                            }
                             try {
                               await pdfService.downloadAssetPdf(
-                                assetPath: crop.pdfAssetPath,
+                                assetPath: pdfAssetPath,
                                 fileName: '${crop.id}_ficha_tecnica.pdf',
                               );
                             } on PdfDownloadException catch (error) {
@@ -367,7 +264,9 @@ class CropDetailsScreen extends StatelessWidget {
                           ),
                           icon: Icon(Icons.download_outlined, color: accent),
                           label: Text(
-                            'Descargar ficha técnica',
+                            crop.pdfAssetPath == null
+                                ? 'Ficha técnica no disponible'
+                                : 'Descargar ficha técnica',
                             style: TextStyle(
                               color: accent,
                               fontWeight: FontWeight.w800,
@@ -406,6 +305,140 @@ class CropDetailsScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroBanner(BuildContext context, CropCatalogItem crop) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+      child: SizedBox(
+        width: double.infinity,
+        height: 430,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              crop.imageAsset,
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              errorBuilder: (_, _, _) => Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: crop.gradientColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Icon(
+                  crop.icon,
+                  color: Colors.white.withValues(alpha: 0.72),
+                  size: 120,
+                ),
+              ),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.22),
+                    AppColors.greenDark.withValues(alpha: 0.60),
+                    AppColors.greenDark.withValues(alpha: 0.92),
+                  ],
+                  stops: const [0.0, 0.48, 1.0],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 54, 20, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: const Icon(Icons.arrow_back, color: Colors.white),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Text(
+                      crop.season,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    crop.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 40,
+                      fontWeight: FontWeight.w900,
+                      height: 0.95,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    crop.description,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      height: 1.38,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _heroMetric(
+                          label: 'Ciclo',
+                          value: '${crop.cycleDays} días',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _heroMetric(
+                          label: 'Temperatura',
+                          value: crop.idealTemperature,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _heroMetric(
+                          label: 'Rendimiento',
+                          value: crop.expectedYield,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

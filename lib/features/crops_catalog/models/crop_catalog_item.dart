@@ -15,7 +15,7 @@ class CropCatalogItem {
     required this.gradientColors,
     required this.badgeColor,
     required this.icon,
-    required this.pdfAssetPath,
+    this.pdfAssetPath,
     required this.idealTemperature,
     required this.waterRequirement,
     required this.soilType,
@@ -38,7 +38,7 @@ class CropCatalogItem {
   final List<Color> gradientColors;
   final Color badgeColor;
   final IconData icon;
-  final String pdfAssetPath;
+  final String? pdfAssetPath;
   final String idealTemperature;
   final String waterRequirement;
   final String soilType;

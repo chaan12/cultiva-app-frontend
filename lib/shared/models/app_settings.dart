@@ -7,6 +7,7 @@ class AppSettings {
     required this.cycloneAlerts,
     required this.droughtAlerts,
     required this.heatAlerts,
+    required this.allowMobileData,
     required this.autoLocation,
     required this.locationName,
     this.latitude,
@@ -22,6 +23,7 @@ class AppSettings {
       cycloneAlerts: true,
       droughtAlerts: true,
       heatAlerts: false,
+      allowMobileData: true,
       autoLocation: true,
       locationName: 'Mérida, Yucatán',
     );
@@ -74,6 +76,7 @@ class AppSettings {
       cycloneAlerts: readBool('cycloneAlerts', defaults.cycloneAlerts),
       droughtAlerts: readBool('droughtAlerts', defaults.droughtAlerts),
       heatAlerts: readBool('heatAlerts', defaults.heatAlerts),
+      allowMobileData: readBool('allowMobileData', defaults.allowMobileData),
       autoLocation: readBool('autoLocation', defaults.autoLocation),
       locationName: readString('locationName', defaults.locationName),
       latitude: readDouble('latitude'),
@@ -88,6 +91,7 @@ class AppSettings {
   final bool cycloneAlerts;
   final bool droughtAlerts;
   final bool heatAlerts;
+  final bool allowMobileData;
   final bool autoLocation;
   final String locationName;
   final double? latitude;
@@ -102,6 +106,7 @@ class AppSettings {
       'cycloneAlerts': cycloneAlerts,
       'droughtAlerts': droughtAlerts,
       'heatAlerts': heatAlerts,
+      'allowMobileData': allowMobileData,
       'autoLocation': autoLocation,
       'locationName': locationName,
       'latitude': latitude,
@@ -117,6 +122,7 @@ class AppSettings {
     bool? cycloneAlerts,
     bool? droughtAlerts,
     bool? heatAlerts,
+    bool? allowMobileData,
     bool? autoLocation,
     String? locationName,
     double? latitude,
@@ -131,6 +137,7 @@ class AppSettings {
       cycloneAlerts: cycloneAlerts ?? this.cycloneAlerts,
       droughtAlerts: droughtAlerts ?? this.droughtAlerts,
       heatAlerts: heatAlerts ?? this.heatAlerts,
+      allowMobileData: allowMobileData ?? this.allowMobileData,
       autoLocation: autoLocation ?? this.autoLocation,
       locationName: locationName ?? this.locationName,
       latitude: clearCoordinates ? null : (latitude ?? this.latitude),

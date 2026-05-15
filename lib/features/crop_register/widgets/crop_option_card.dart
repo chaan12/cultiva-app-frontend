@@ -36,6 +36,12 @@ class CropOptionCard extends StatelessWidget {
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  height: 120,
+                  width: double.infinity,
+                  color: item.badgeColor.withValues(alpha: 0.12),
+                  child: Icon(item.icon, color: item.badgeColor, size: 42),
+                ),
               ),
             ),
             const SizedBox(height: 10),

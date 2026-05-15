@@ -125,8 +125,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
       child: Row(
         children: [
           Container(
-            width: 58,
-            height: 58,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFF246B45), Color(0xFFD69A2D)],
@@ -141,7 +141,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
               size: 28,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,15 +149,20 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 Text(
                   'Cabañuelas',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 4),
                 Text(
                   'Ve una lectura sencilla de meses con poca o mucha lluvia.',
                   style: TextStyle(color: Colors.black54, height: 1.3),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           IconButton.filled(
             onPressed: () {
               Navigator.of(context).push(
@@ -228,10 +233,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
     required DateTime? lastWifiSyncAt,
   }) {
     final label = hasWifiConnection
-        ? 'Wi-Fi conectado'
+        ? 'Internet conectado'
         : isShowingCachedWeather
         ? 'Mostrando datos guardados'
-        : 'Sin Wi-Fi';
+        : 'Sin internet';
     final subtitle = lastWifiSyncAt == null
         ? 'Aún no hay una sincronización local'
         : 'Última sincronización: ${_formatDateTime(lastWifiSyncAt)}';
@@ -246,7 +251,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
       child: Row(
         children: [
           Icon(
-            hasWifiConnection ? Icons.wifi : Icons.cloud_off,
+            hasWifiConnection ? Icons.cloud_done_outlined : Icons.cloud_off,
             color: Colors.white,
             size: 18,
           ),
@@ -450,7 +455,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
           Row(
             children: [
               Icon(
-                hasWifiConnection ? Icons.wifi : Icons.wifi_off,
+                hasWifiConnection ? Icons.cloud_done_outlined : Icons.cloud_off,
                 color: hasWifiConnection
                     ? const Color(0xFF1565C0)
                     : Colors.orange.shade700,
@@ -464,7 +469,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
           ),
           const SizedBox(height: 14),
           _statusRow(
-            'Última conexión por Wi-Fi',
+            'Última conexión a internet',
             lastWifiSyncAt == null
                 ? 'Aún no registrada'
                 : _formatDateTime(lastWifiSyncAt),
@@ -479,13 +484,13 @@ class _ClimaScreenState extends State<ClimaScreen> {
             'Datos mostrados',
             isShowingCachedWeather
                 ? 'Según lo sincronizado ese día'
-                : 'Sincronización actual desde Wi-Fi',
+                : 'Sincronización actual desde internet',
           ),
           const SizedBox(height: 10),
           Text(
             isShowingCachedWeather
                 ? 'La app está usando el pronóstico guardado localmente para mostrar lo que reportaba la API en la última sincronización.'
-                : 'La app puede guardar hoy y los próximos 15 días para seguir mostrándolos si después te quedas sin Wi-Fi.',
+                : 'La app puede guardar hoy y los próximos 15 días para seguir mostrándolos si después te quedas sin internet.',
             style: const TextStyle(color: Colors.black54, height: 1.35),
           ),
         ],
@@ -603,7 +608,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            hasWifiConnection ? Icons.cloud_sync : Icons.wifi_off,
+            hasWifiConnection ? Icons.cloud_sync : Icons.cloud_off,
             size: 42,
             color: const Color(0xFF1565C0),
           ),
@@ -611,7 +616,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
           Text(
             hasWifiConnection
                 ? 'Esperando la primera sincronización del clima'
-                : 'Sin Wi-Fi y sin datos guardados todavía',
+                : 'Sin internet y sin datos guardados todavía',
             textAlign: TextAlign.center,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
@@ -619,7 +624,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
           Text(
             hasWifiConnection
                 ? 'En cuanto la consulta termine, se guardará el pronóstico local para hoy y los próximos 15 días.'
-                : 'Conéctate a Wi-Fi para descargar el pronóstico y dejarlo disponible offline.',
+                : 'Conéctate a internet para descargar el pronóstico y dejarlo disponible offline.',
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.black54, height: 1.35),
           ),
@@ -865,7 +870,11 @@ class _ClimaScreenState extends State<ClimaScreen> {
               minX: -0.5,
               maxX: points.length - 0.5,
               gridData: FlGridData(show: true, drawVerticalLine: false),
-              titlesData: _titlesData(points, showLeftTitles: true, leftInterval: 10),
+              titlesData: _titlesData(
+                points,
+                showLeftTitles: true,
+                leftInterval: 10,
+              ),
               borderData: FlBorderData(show: false),
               lineBarsData: [
                 LineChartBarData(
@@ -907,7 +916,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
       ],
     );
   }
- 
+
   FlTitlesData _titlesData(
     List<HourlyWeatherPoint> points, {
     bool showLeftTitles = false,

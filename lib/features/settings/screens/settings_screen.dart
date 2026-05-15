@@ -18,6 +18,8 @@ class ConfiguracionScreen extends StatefulWidget {
 class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   late final TextEditingController _locationController;
   AppLocation? _selectedLocation;
+  String? _selectedState;
+  String? _loadedLocationName;
 
   @override
   void initState() {
@@ -29,8 +31,15 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final locationName = AppScope.of(context).settings.locationName;
+    if (_loadedLocationName == locationName) {
+      return;
+    }
+    _loadedLocationName = locationName;
     _locationController.text = locationName;
     _selectedLocation = LocationOptionsService.byLabel(locationName);
+    _selectedState = _selectedLocation == null
+        ? null
+        : LocationOptionsService.stateOf(_selectedLocation!);
   }
 
   @override
@@ -76,10 +85,41 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     }
   }
 
+  Future<void> _savePresetLocation(AppLocation location) {
+    _loadedLocationName = location.label;
+    _locationController.text = location.label;
+    return _toggleSetting(
+      () => AppScope.of(context).savePresetLocation(location),
+      'Ubicación guardada correctamente.',
+    );
+  }
+
+  Future<void> _saveTypedLocation() {
+    final query = _locationController.text.trim();
+    if (query.isEmpty) {
+      showCultivaSnackBar(
+        context,
+        message: 'Escribe una ciudad o municipio válido.',
+        color: Colors.redAccent,
+        icon: Icons.warning_amber_rounded,
+      );
+      return Future<void>.value();
+    }
+    _loadedLocationName = query;
+    return _toggleSetting(
+      () => AppScope.of(context).saveManualLocation(query),
+      'Ubicación guardada correctamente.',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = AppScope.of(context);
     final settings = store.settings;
+    final states = LocationOptionsService.states;
+    final locationsForState = _selectedState == null
+        ? const <AppLocation>[]
+        : LocationOptionsService.optionsForState(_selectedState!);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F4E0),
@@ -233,7 +273,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                   SettingsSectionCard(
                     icon: Icons.map_outlined,
                     title: 'Ubicación',
-                    subtitle: 'Configura tu zona',
+                    subtitle: 'Clima por GPS, estado o municipio',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -304,9 +344,43 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                 ],
                               ),
                               const SizedBox(height: 18),
+                              DropdownButtonFormField<String>(
+                                key: ValueKey<String>(
+                                  'state-${settings.autoLocation}-${_selectedState ?? 'none'}',
+                                ),
+                                initialValue: settings.autoLocation
+                                    ? null
+                                    : _selectedState,
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  hintText: 'Selecciona estado',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                items: states
+                                    .map(
+                                      (state) => DropdownMenuItem<String>(
+                                        value: state,
+                                        child: Text(state),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: settings.autoLocation
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          _selectedState = value;
+                                          _selectedLocation = null;
+                                        });
+                                      },
+                              ),
+                              const SizedBox(height: 12),
                               DropdownButtonFormField<AppLocation>(
                                 key: ValueKey<String>(
-                                  '${settings.autoLocation}-${_selectedLocation?.label ?? 'none'}',
+                                  'municipality-${settings.autoLocation}-${_selectedState ?? 'none'}-${_selectedLocation?.label ?? 'none'}',
                                 ),
                                 initialValue: settings.autoLocation
                                     ? null
@@ -314,13 +388,15 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                 decoration: InputDecoration(
                                   filled: true,
                                   fillColor: Colors.white,
-                                  hintText: 'Selecciona una ubicación',
+                                  hintText: _selectedState == null
+                                      ? 'Elige un estado primero'
+                                      : 'Selecciona ciudad o municipio',
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide.none,
                                   ),
                                 ),
-                                items: LocationOptionsService.options
+                                items: locationsForState
                                     .map(
                                       (option) => DropdownMenuItem<AppLocation>(
                                         value: option,
@@ -328,7 +404,9 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                       ),
                                     )
                                     .toList(),
-                                onChanged: settings.autoLocation
+                                onChanged:
+                                    settings.autoLocation ||
+                                        locationsForState.isEmpty
                                     ? null
                                     : (value) {
                                         setState(() {
@@ -337,6 +415,23 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                               value?.label ?? '';
                                         });
                                       },
+                              ),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _locationController,
+                                enabled: !settings.autoLocation,
+                                textInputAction: TextInputAction.done,
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  hintText:
+                                      'O escribe ciudad, municipio, estado',
+                                  prefixIcon: const Icon(Icons.search),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 12),
                               Row(
@@ -350,6 +445,16 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                                   .refreshCurrentLocation();
                                               _locationController.text =
                                                   store.settings.locationName;
+                                              final selected =
+                                                  LocationOptionsService.byLabel(
+                                                    store.settings.locationName,
+                                                  );
+                                              _selectedLocation = selected;
+                                              _selectedState = selected == null
+                                                  ? null
+                                                  : LocationOptionsService.stateOf(
+                                                      selected,
+                                                    );
                                             }, 'Ubicación actual actualizada.'),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(
@@ -373,37 +478,107 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                 ],
                               ),
                               const SizedBox(height: 10),
-                              ElevatedButton(
+                              OutlinedButton.icon(
+                                onPressed:
+                                    settings.autoLocation ||
+                                        store.isBusy ||
+                                        _selectedLocation == null
+                                    ? null
+                                    : () => _savePresetLocation(
+                                        _selectedLocation!,
+                                      ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF0D5D33),
+                                  side: const BorderSide(
+                                    color: Color(0xFF0D5D33),
+                                  ),
+                                  minimumSize: const Size(double.infinity, 50),
+                                ),
+                                icon: const Icon(Icons.place_outlined),
+                                label: const Text(
+                                  'Guardar estado y municipio',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              ElevatedButton.icon(
                                 onPressed: settings.autoLocation || store.isBusy
                                     ? null
-                                    : () {
-                                        final value = _selectedLocation;
-                                        if (value == null) {
-                                          showCultivaSnackBar(
-                                            context,
-                                            message:
-                                                'Selecciona una ubicación válida.',
-                                            color: Colors.redAccent,
-                                            icon: Icons.warning_amber_rounded,
-                                          );
-                                          return;
-                                        }
-                                        _toggleSetting(
-                                          () => store.savePresetLocation(value),
-                                          'Ubicación guardada correctamente.',
-                                        );
-                                      },
+                                    : _saveTypedLocation,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF00C853),
                                   minimumSize: const Size(double.infinity, 50),
                                 ),
-                                child: const Text(
-                                  'Guardar ubicación manual',
+                                icon: const Icon(
+                                  Icons.travel_explore,
+                                  color: Colors.white,
+                                ),
+                                label: const Text(
+                                  'Buscar y guardar ubicación escrita',
                                   style: TextStyle(color: Colors.white),
                                 ),
                               ),
                             ],
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SettingsSectionCard(
+                    icon: Icons.cloud_sync_outlined,
+                    title: 'Datos y sincronización',
+                    subtitle: 'Controla cómo se actualiza el clima',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SettingsSwitchTile(
+                          icon: Icons.signal_cellular_alt,
+                          title: 'Usar datos móviles',
+                          subtitle: 'Permite actualizar clima sin Wi-Fi',
+                          value: settings.allowMobileData,
+                          onChanged: (value) => _toggleSetting(
+                            () async {
+                              await store.updateSettings(
+                                settings.copyWith(allowMobileData: value),
+                              );
+                              if (value) {
+                                await store.refreshWeather();
+                              }
+                            },
+                            value
+                                ? 'Datos móviles activados.'
+                                : 'Datos móviles desactivados.',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        _infoRow(
+                          icon: store.hasNetworkConnection
+                              ? Icons.cloud_done_outlined
+                              : Icons.cloud_off_outlined,
+                          label: 'Estado de conexión',
+                          value: store.hasNetworkConnection
+                              ? 'Internet disponible'
+                              : 'Sin internet disponible',
+                        ),
+                        const SizedBox(height: 10),
+                        _infoRow(
+                          icon: Icons.schedule,
+                          label: 'Clima guardado',
+                          value: store.lastWifiSyncAt == null
+                              ? 'Aún sin sincronización'
+                              : 'Última sincronización disponible',
+                        ),
+                        const SizedBox(height: 14),
+                        OutlinedButton.icon(
+                          onPressed: store.isBusy ? null : store.refreshWeather,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF0D5D33),
+                            side: const BorderSide(color: Color(0xFF0D5D33)),
+                            minimumSize: const Size(double.infinity, 50),
+                          ),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Actualizar clima ahora'),
                         ),
                       ],
                     ),
@@ -538,6 +713,37 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _infoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: const Color(0xFF0D5D33), size: 22),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -5,8 +5,10 @@ import '../../../shared/state/app_scope.dart';
 import '../../../shared/state/app_store.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
 import '../../crop_details/screens/crop_details_screen.dart';
+import '../../crop_register/screens/crop_register_screen.dart';
 import '../../crop_tracking/services/crop_tracking_service.dart';
 import '../widgets/dashboard_summary_card.dart';
+import 'next_milestone_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -29,6 +31,10 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(height: 20),
+                  _todayOverviewCard(context, store),
+                  const SizedBox(height: 16),
+                  _quickActionsCard(context),
+                  const SizedBox(height: 16),
                   DashboardSummaryCard(
                     title: 'Temporada actual',
                     subtitle: 'Recomendación dinámica',
@@ -307,51 +313,334 @@ class DashboardScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Bienvenido a',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const Text(
+                  'Cultiva +',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      color: Colors.white70,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        store.settings.locationName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 92,
+            height: 92,
+            child: Image.asset('assets/logos/cultiva_logo.png'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _todayOverviewCard(BuildContext context, AppStore store) {
+    final weather = store.weather;
+    final nextCrop = store.nextPendingEventCrop;
+    final nextSummary = nextCrop == null
+        ? null
+        : CropTrackingService.buildSummary(nextCrop);
+    final bestCrop = store.recommendedCropItem;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E9D8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              const Text(
-                'Bienvenido a',
-                style: TextStyle(color: Colors.white70, fontSize: 16),
-              ),
-              const Text(
-                'Cultiva +',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+              const Icon(Icons.dashboard_customize, color: Color(0xFF0D5D33)),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Panel de hoy',
+                  style: TextStyle(
+                    color: Color(0xFF0D5D33),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.location_on,
-                    color: Colors.white70,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    store.settings.locationName,
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                ],
+              TextButton(
+                onPressed: () => MainNavigation.of(context)?.goToTab(3),
+                child: const Text('Clima'),
               ),
             ],
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.settings, color: Colors.white),
-              onPressed: () {
-                MainNavigation.of(context)?.goToTab(4);
-              },
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _overviewTile(
+                  icon: Icons.thermostat,
+                  label: 'Clima',
+                  value: weather == null
+                      ? 'Sin datos'
+                      : '${weather.temperatureC.toStringAsFixed(0)}°C',
+                  detail: weather == null
+                      ? store.settings.locationName
+                      : 'Lluvia ${weather.rainProbability}%',
+                  color: const Color(0xFF1565C0),
+                  background: const Color(0xFFE3F2FD),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _overviewTile(
+                  icon: Icons.event_available,
+                  label: 'Próximo hito',
+                  value: nextSummary?.nextEventLabel ?? 'Sin tareas',
+                  detail: nextCrop?.name ?? 'Registra un cultivo',
+                  color: const Color(0xFFEF6C00),
+                  background: const Color(0xFFFFF3E0),
+                  onTap: nextCrop == null
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  NextMilestoneScreen(crop: nextCrop),
+                            ),
+                          );
+                        },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CropDetailsScreen(id: bestCrop.id),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FBF0),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFE2E9D8)),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: bestCrop.badgeColor.withValues(
+                      alpha: 0.14,
+                    ),
+                    child: Icon(bestCrop.icon, color: bestCrop.badgeColor),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Mejor opción para revisar',
+                          style: TextStyle(color: Colors.black54, fontSize: 12),
+                        ),
+                        Text(
+                          '${bestCrop.name} · ${bestCrop.sowingWindow}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF0D5D33),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: Color(0xFF0D5D33)),
+                ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _quickActionsCard(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _quickAction(
+            icon: Icons.add_circle_outline,
+            label: 'Registrar',
+            color: const Color(0xFF00A344),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CropRegisterScreen()),
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _quickAction(
+            icon: Icons.spa_outlined,
+            label: 'Catálogo',
+            color: const Color(0xFF0D5D33),
+            onTap: () => MainNavigation.of(context)?.goToTab(2),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _quickAction(
+            icon: Icons.cloud_outlined,
+            label: 'Clima',
+            color: const Color(0xFF1565C0),
+            onTap: () => MainNavigation.of(context)?.goToTab(3),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _overviewTile({
+    required IconData icon,
+    required String label,
+    required String value,
+    required String detail,
+    required Color color,
+    required Color background,
+    VoidCallback? onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 124),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: color),
+                  const Spacer(),
+                  if (onTap != null)
+                    Icon(Icons.chevron_right, color: color, size: 20),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                detail,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _quickAction({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 82),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE2E9D8)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 26),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

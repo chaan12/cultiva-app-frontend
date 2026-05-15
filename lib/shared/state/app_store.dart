@@ -53,8 +53,19 @@ class AppStore extends ChangeNotifier {
 
   WeatherSnapshot? get weather => _weather;
   DateTime? get lastWifiSyncAt => _weather?.lastWifiSyncAt;
-  bool get hasWifiConnection =>
-      _connectivityResults.contains(ConnectivityResult.wifi);
+  bool get hasNetworkConnection {
+    return _connectivityResults.any((result) {
+      if (result == ConnectivityResult.none) {
+        return false;
+      }
+      if (result == ConnectivityResult.mobile) {
+        return _settings.allowMobileData;
+      }
+      return true;
+    });
+  }
+
+  bool get hasWifiConnection => hasNetworkConnection;
   bool get isShowingCachedWeather => _weather?.isFromCache ?? false;
   bool get initialized => _initialized;
   bool get isBusy => _isBusy;
@@ -166,9 +177,9 @@ class AppStore extends ChangeNotifier {
       try {
         await _ensureLocationCoordinates(
           forceCurrentLocation: _settings.autoLocation,
-          allowGeocoding: hasWifiConnection,
+          allowGeocoding: hasNetworkConnection,
         );
-        if (hasWifiConnection) {
+        if (hasNetworkConnection) {
           await _refreshWeatherInternal(syncTriggeredByWifi: true);
         } else if (_weather != null) {
           _weather = _weather!.copyWith(isFromCache: true);
@@ -242,7 +253,7 @@ class AppStore extends ChangeNotifier {
       );
       await _databaseService.saveSettings(_settings);
       _lastError = null;
-      if (hasWifiConnection) {
+      if (hasNetworkConnection) {
         await _refreshWeatherInternal(syncTriggeredByWifi: true);
       } else {
         _clearWeatherIfOutdated();
@@ -272,7 +283,7 @@ class AppStore extends ChangeNotifier {
       );
       await _databaseService.saveSettings(_settings);
       _lastError = null;
-      if (hasWifiConnection) {
+      if (hasNetworkConnection) {
         await _refreshWeatherInternal(syncTriggeredByWifi: true);
       } else {
         _clearWeatherIfOutdated();
@@ -295,7 +306,7 @@ class AppStore extends ChangeNotifier {
       );
       await _databaseService.saveSettings(_settings);
       _lastError = null;
-      if (hasWifiConnection) {
+      if (hasNetworkConnection) {
         await _refreshWeatherInternal(syncTriggeredByWifi: true);
       } else {
         _clearWeatherIfOutdated();
@@ -310,9 +321,9 @@ class AppStore extends ChangeNotifier {
     await initialize();
     await _ensureLocationCoordinates(
       forceCurrentLocation: _settings.autoLocation,
-      allowGeocoding: hasWifiConnection,
+      allowGeocoding: hasNetworkConnection,
     );
-    if (!hasWifiConnection) {
+    if (!hasNetworkConnection) {
       if (_weather != null) {
         _weather = _weather!.copyWith(isFromCache: true);
         notifyListeners();
@@ -374,9 +385,9 @@ class AppStore extends ChangeNotifier {
   Future<void> _handleConnectivityChange(
     List<ConnectivityResult> results,
   ) async {
-    final hadWifi = hasWifiConnection;
+    final hadNetwork = hasNetworkConnection;
     _connectivityResults = results;
-    if (!hadWifi && hasWifiConnection) {
+    if (!hadNetwork && hasNetworkConnection) {
       await _ensureLocationCoordinates(
         forceCurrentLocation: _settings.autoLocation,
         allowGeocoding: true,
@@ -384,7 +395,7 @@ class AppStore extends ChangeNotifier {
       await _refreshWeatherInternal(syncTriggeredByWifi: true);
       return;
     }
-    if (hadWifi && !hasWifiConnection && _weather != null) {
+    if (hadNetwork && !hasNetworkConnection && _weather != null) {
       _weather = _weather!.copyWith(isFromCache: true);
     }
     notifyListeners();
