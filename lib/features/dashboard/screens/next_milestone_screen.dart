@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
 import '../../crop_tracking/models/crop_tracking_models.dart';
 import '../../crop_tracking/screens/crop_tracking_screen.dart';
@@ -17,11 +18,11 @@ class NextMilestoneScreen extends StatelessWidget {
         ? plan.upcomingEvents.first
         : null;
     final priorityColor = event == null
-        ? const Color(0xFF0D5D33)
+        ? AppColors.greenText(context)
         : _priorityColor(event);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -30,11 +31,11 @@ class NextMilestoneScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 34),
               child: Column(
                 children: [
-                  _buildMilestoneCard(event, priorityColor),
+                  _buildMilestoneCard(context, event, priorityColor),
                   const SizedBox(height: 16),
-                  _buildCropStatusCard(plan),
+                  _buildCropStatusCard(context, plan),
                   const SizedBox(height: 16),
-                  _buildActionGuide(event, priorityColor),
+                  _buildActionGuide(context, event, priorityColor),
                   const SizedBox(height: 16),
                   _buildTimelineButton(context),
                 ],
@@ -150,11 +151,15 @@ class NextMilestoneScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMilestoneCard(CropUpcomingEvent? event, Color priorityColor) {
+  Widget _buildMilestoneCard(
+    BuildContext context,
+    CropUpcomingEvent? event,
+    Color priorityColor,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context),
       child: event == null
           ? const Text(
               'Este cultivo no tiene eventos pendientes por ahora.',
@@ -177,10 +182,10 @@ class NextMilestoneScreen extends StatelessWidget {
                         children: [
                           Text(
                             event.task,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 21,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF0D5D33),
+                              color: AppColors.greenText(context),
                             ),
                           ),
                           Text(
@@ -198,13 +203,17 @@ class NextMilestoneScreen extends StatelessWidget {
                 const SizedBox(height: 18),
                 Text(
                   event.description,
-                  style: const TextStyle(color: Colors.black87, height: 1.42),
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    height: 1.42,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 Row(
                   children: [
                     Expanded(
                       child: _smallFact(
+                        context,
                         label: 'Tiempo',
                         value: event.daysUntil <= 0
                             ? 'Hoy'
@@ -215,6 +224,7 @@ class NextMilestoneScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _smallFact(
+                        context,
                         label: 'Prioridad',
                         value: event.priority == 'high' ? 'Alta' : 'Media',
                         color: priorityColor,
@@ -223,6 +233,7 @@ class NextMilestoneScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _smallFact(
+                        context,
                         label: 'Tipo',
                         value: event.required ? 'Clave' : 'Opcional',
                         color: priorityColor,
@@ -235,29 +246,31 @@ class NextMilestoneScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCropStatusCard(CropTrackingPlan plan) {
+  Widget _buildCropStatusCard(BuildContext context, CropTrackingPlan plan) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Estado del cultivo',
             style: TextStyle(
-              color: Color(0xFF0D5D33),
+              color: AppColors.greenText(context),
               fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 14),
-          _statusRow('Etapa actual', plan.currentStage),
+          _statusRow(context, 'Etapa actual', plan.currentStage),
           _statusRow(
+            context,
             'Día del ciclo',
             '${crop.daysSinceSowing}/${crop.cycleDays}',
           ),
           _statusRow(
+            context,
             'Cosecha estimada',
             '${plan.daysToHarvest} días restantes',
           ),
@@ -276,19 +289,23 @@ class NextMilestoneScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionGuide(CropUpcomingEvent? event, Color priorityColor) {
+  Widget _buildActionGuide(
+    BuildContext context,
+    CropUpcomingEvent? event,
+    Color priorityColor,
+  ) {
     final actions = _actionsFor(event);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Qué revisar',
             style: TextStyle(
-              color: Color(0xFF0D5D33),
+              color: AppColors.greenText(context),
               fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
@@ -335,7 +352,8 @@ class NextMilestoneScreen extends StatelessWidget {
     );
   }
 
-  Widget _smallFact({
+  Widget _smallFact(
+    BuildContext context, {
     required String label,
     required String value,
     required Color color,
@@ -351,7 +369,7 @@ class NextMilestoneScreen extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.black54, fontSize: 12),
+            style: TextStyle(color: AppColors.mutedText(context), fontSize: 12),
           ),
           const SizedBox(height: 4),
           Text(
@@ -365,14 +383,17 @@ class NextMilestoneScreen extends StatelessWidget {
     );
   }
 
-  Widget _statusRow(String label, String value) {
+  Widget _statusRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(label, style: const TextStyle(color: Colors.black54)),
+            child: Text(
+              label,
+              style: TextStyle(color: AppColors.mutedText(context)),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -387,11 +408,11 @@ class NextMilestoneScreen extends StatelessWidget {
     );
   }
 
-  BoxDecoration _cardDecoration() {
+  BoxDecoration _cardDecoration(BuildContext context) {
     return BoxDecoration(
-      color: Colors.white,
+      color: AppColors.cardBackground(context),
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: const Color(0xFFE2E9D8)),
+      border: Border.all(color: AppColors.border(context)),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withValues(alpha: 0.04),

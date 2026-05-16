@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
 
 class CropOptionCard extends StatelessWidget {
@@ -14,9 +15,9 @@ class CropOptionCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBackground(context),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.black12),
+          border: Border.all(color: AppColors.border(context)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),

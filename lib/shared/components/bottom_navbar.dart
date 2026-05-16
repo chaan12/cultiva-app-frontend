@@ -27,6 +27,12 @@ class _CultivaBottomNavState extends State<CultivaBottomNav> {
     required int index,
   }) {
     bool active = widget.currentIndex == index;
+    final activeBg = AppColors.isDark(context)
+        ? const Color(0xFF203327)
+        : AppColors.cream;
+    final inactiveColor = AppColors.isDark(context)
+        ? const Color(0xFFD9E8DD)
+        : Colors.black;
 
     return Expanded(
       child: GestureDetector(
@@ -36,7 +42,7 @@ class _CultivaBottomNavState extends State<CultivaBottomNav> {
           curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
           decoration: BoxDecoration(
-            color: active ? AppColors.cream : Colors.transparent,
+            color: active ? activeBg : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -48,7 +54,7 @@ class _CultivaBottomNavState extends State<CultivaBottomNav> {
                 child: Icon(
                   icon,
                   key: ValueKey(active),
-                  color: active ? AppColors.greenDark : Colors.black,
+                  color: active ? AppColors.greenPrimary : inactiveColor,
                   size: 24,
                 ),
               ),
@@ -61,7 +67,7 @@ class _CultivaBottomNavState extends State<CultivaBottomNav> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                  color: active ? AppColors.greenDark : Colors.black,
+                  color: active ? AppColors.greenPrimary : inactiveColor,
                 ),
               ),
             ],
@@ -76,11 +82,13 @@ class _CultivaBottomNavState extends State<CultivaBottomNav> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(40),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.35 : 0.08,
+            ),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),

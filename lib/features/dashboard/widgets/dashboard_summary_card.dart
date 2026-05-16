@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+
 class DashboardSummaryCard extends StatelessWidget {
   const DashboardSummaryCard({
     super.key,
@@ -7,23 +9,23 @@ class DashboardSummaryCard extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.child,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
   final Widget child;
-  final Color backgroundColor;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: backgroundColor ?? AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,27 +33,32 @@ class DashboardSummaryCard extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: const Color(
-                  0xFF0D5D33,
-                ).withValues(alpha: 0.08),
-                child: Icon(icon, color: const Color(0xFF0D5D33)),
+                backgroundColor: AppColors.greenIconBackground(context),
+                child: Icon(icon, color: AppColors.greenText(context)),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ],
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.mutedText(context),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

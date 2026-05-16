@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/theme/app_colors.dart';
 import 'canuelas_screen.dart';
 import '../../../shared/models/weather_snapshot.dart';
 import '../../../shared/state/app_scope.dart';
@@ -23,7 +24,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
     final weather = store.weather;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
         onRefresh: store.refreshWeather,
         child: ListView(
@@ -111,9 +112,9 @@ class _ClimaScreenState extends State<ClimaScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE4DAC3)),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -142,20 +143,27 @@ class _ClimaScreenState extends State<ClimaScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Cabañuelas',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Ve una lectura sencilla de meses con poca o mucha lluvia.',
-                  style: TextStyle(color: Colors.black54, height: 1.3),
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    height: 1.3,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -386,13 +394,17 @@ class _ClimaScreenState extends State<ClimaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange),
-            SizedBox(width: 8),
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            const SizedBox(width: 8),
             Text(
               'Alertas activas',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
           ],
         ),
@@ -404,7 +416,9 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
+                  color: AppColors.isDark(context)
+                      ? const Color(0xFF301D0A)
+                      : const Color(0xFFFFF3E0),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.orangeAccent),
                 ),
@@ -418,9 +432,11 @@ class _ClimaScreenState extends State<ClimaScreen> {
                     Expanded(
                       child: Text(
                         alert,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFE65100),
+                          color: AppColors.isDark(context)
+                              ? const Color(0xFFFFB74D)
+                              : const Color(0xFFE65100),
                         ),
                       ),
                     ),
@@ -445,9 +461,9 @@ class _ClimaScreenState extends State<ClimaScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFDCE6D2)),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,9 +477,13 @@ class _ClimaScreenState extends State<ClimaScreen> {
                     : Colors.orange.shade700,
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Sincronización offline',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                style: TextStyle(
+                  color: AppColors.primaryText(context),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
               ),
             ],
           ),
@@ -491,7 +511,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
             isShowingCachedWeather
                 ? 'La app está usando el pronóstico guardado localmente para mostrar lo que reportaba la API en la última sincronización.'
                 : 'La app puede guardar hoy y los próximos 15 días para seguir mostrándolos si después te quedas sin internet.',
-            style: const TextStyle(color: Colors.black54, height: 1.35),
+            style: TextStyle(color: AppColors.mutedText(context), height: 1.35),
           ),
         ],
       ),
@@ -508,8 +528,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
             width: 150,
             child: Text(
               label,
-              style: const TextStyle(
-                color: Colors.black54,
+              style: TextStyle(
+                color: AppColors.mutedText(context),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -517,7 +537,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -529,9 +552,13 @@ class _ClimaScreenState extends State<ClimaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Pronóstico guardado (hoy + 15 días)',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: AppColors.primaryText(context),
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -546,34 +573,38 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 width: 150,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardBackground(context),
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: const Color(0xFFDDE7D0)),
+                  border: Border.all(color: AppColors.border(context)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       day.label,
-                      style: const TextStyle(
-                        color: Color(0xFF0D5D33),
+                      style: TextStyle(
+                        color: AppColors.greenText(context),
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       _formatDate(day.date),
-                      style: const TextStyle(color: Colors.black54),
+                      style: TextStyle(color: AppColors.mutedText(context)),
                     ),
                     const Spacer(),
                     Text(
                       day.description,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       '${day.maxTempC.toStringAsFixed(0)}° / ${day.minTempC.toStringAsFixed(0)}°',
-                      style: const TextStyle(
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -581,8 +612,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Lluvia ${day.rainProbability}%',
-                      style: const TextStyle(
-                        color: Colors.black54,
+                      style: TextStyle(
+                        color: AppColors.mutedText(context),
                         fontSize: 12,
                       ),
                     ),
@@ -600,9 +631,9 @@ class _ClimaScreenState extends State<ClimaScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFDDE7D0)),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -618,7 +649,11 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 ? 'Esperando la primera sincronización del clima'
                 : 'Sin internet y sin datos guardados todavía',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontWeight: FontWeight.bold,
+              fontSize: 17,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -626,7 +661,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 ? 'En cuanto la consulta termine, se guardará el pronóstico local para hoy y los próximos 15 días.'
                 : 'Conéctate a internet para descargar el pronóstico y dejarlo disponible offline.',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.black54, height: 1.35),
+            style: TextStyle(color: AppColors.mutedText(context), height: 1.35),
           ),
         ],
       ),
@@ -642,8 +677,9 @@ class _ClimaScreenState extends State<ClimaScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -663,7 +699,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
                   const SizedBox(width: 8),
                   Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: AppColors.primaryText(context),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -673,10 +712,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text(
+                child: Text(
                   '24H',
                   style: TextStyle(
-                    color: Colors.black54,
+                    color: AppColors.mutedText(context),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -712,7 +751,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (value) =>
-              FlLine(color: Colors.black12, strokeWidth: 1),
+              FlLine(color: AppColors.border(context), strokeWidth: 1),
         ),
         titlesData: _titlesData(points, showLeftTitles: true, leftInterval: 5),
         borderData: FlBorderData(show: false),
@@ -749,21 +788,27 @@ class _ClimaScreenState extends State<ClimaScreen> {
     if (maxRain <= 0) {
       return Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFF7FAF3),
+          color: AppColors.isDark(context)
+              ? AppColors.subtleBackground(context)
+              : const Color(0xFFF7FAF3),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.green.withValues(alpha: 0.12)),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.water_drop_outlined, color: Colors.green, size: 34),
-              SizedBox(height: 10),
+              const Icon(
+                Icons.water_drop_outlined,
+                color: Colors.green,
+                size: 34,
+              ),
+              const SizedBox(height: 10),
               Text(
                 'Sin lluvia prevista en las próximas 24 horas',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFF2E7D32),
+                  color: AppColors.greenText(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -826,7 +871,12 @@ class _ClimaScreenState extends State<ClimaScreen> {
         maxY: 105,
         minX: -0.5,
         maxX: points.length - 0.5,
-        gridData: FlGridData(show: true, drawVerticalLine: false),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) =>
+              FlLine(color: AppColors.border(context), strokeWidth: 1),
+        ),
         titlesData: _titlesData(points, showLeftTitles: true, leftInterval: 20),
         borderData: FlBorderData(show: false),
         lineBarsData: [
@@ -869,7 +919,12 @@ class _ClimaScreenState extends State<ClimaScreen> {
               minY: 0,
               minX: -0.5,
               maxX: points.length - 0.5,
-              gridData: FlGridData(show: true, drawVerticalLine: false),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: AppColors.border(context), strokeWidth: 1),
+              ),
               titlesData: _titlesData(
                 points,
                 showLeftTitles: true,
@@ -945,7 +1000,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
               space: 8,
               child: Text(
                 value.toStringAsFixed(value >= 10 ? 0 : 1),
-                style: const TextStyle(color: Colors.grey, fontSize: 10),
+                style: TextStyle(
+                  color: AppColors.mutedText(context),
+                  fontSize: 10,
+                ),
               ),
             );
           },
@@ -969,7 +1027,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
               space: 8,
               child: Text(
                 points[index].label,
-                style: const TextStyle(color: Colors.grey, fontSize: 10),
+                style: TextStyle(
+                  color: AppColors.mutedText(context),
+                  fontSize: 10,
+                ),
               ),
             );
           },
@@ -1001,9 +1062,13 @@ class _ClimaScreenState extends State<ClimaScreen> {
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'Fuentes meteorológicas',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
             const SizedBox(width: 10),
             Container(
@@ -1014,7 +1079,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
               ),
               child: Text(
                 '$activeCount activas',
-                style: const TextStyle(
+                style: TextStyle(
+                  color: AppColors.primaryText(context),
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1034,9 +1100,9 @@ class _ClimaScreenState extends State<ClimaScreen> {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBackground(context),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: AppColors.border(context)),
         ),
         child: Row(
           children: [
@@ -1046,15 +1112,19 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 children: [
                   Text(
                     source.name,
-                    style: const TextStyle(
+                    style: TextStyle(
+                      color: AppColors.primaryText(context),
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Fuente desactivada',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.mutedText(context),
+                    ),
                   ),
                 ],
               ),
@@ -1076,11 +1146,11 @@ class _ClimaScreenState extends State<ClimaScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(20),
         border: _favorites.contains(source.id)
             ? Border.all(color: Colors.amber, width: 2)
-            : Border.all(color: Colors.grey.shade200),
+            : Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         children: [
@@ -1089,7 +1159,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
             decoration: BoxDecoration(
               color: _favorites.contains(source.id)
                   ? Colors.amber.withValues(alpha: 0.08)
-                  : Colors.grey.withValues(alpha: 0.05),
+                  : AppColors.subtleBackground(context),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),
@@ -1104,16 +1174,17 @@ class _ClimaScreenState extends State<ClimaScreen> {
                         children: [
                           Text(
                             source.name,
-                            style: const TextStyle(
+                            style: TextStyle(
+                              color: AppColors.primaryText(context),
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
                           Text(
                             source.description,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey,
+                              color: AppColors.mutedText(context),
                             ),
                           ),
                         ],
@@ -1146,7 +1217,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
                         value: source.reliability / 100,
                         minHeight: 6,
                         borderRadius: BorderRadius.circular(10),
-                        backgroundColor: Colors.grey.shade300,
+                        backgroundColor: AppColors.border(context),
                         valueColor: AlwaysStoppedAnimation(
                           source.reliability >= 90
                               ? Colors.green
@@ -1159,7 +1230,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
                     const SizedBox(width: 10),
                     Text(
                       '${source.reliability}% confiable',
-                      style: const TextStyle(
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1211,7 +1283,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: labelSize,
-                                    color: Colors.grey.shade700,
+                                    color: AppColors.mutedText(context),
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1235,9 +1307,9 @@ class _ClimaScreenState extends State<ClimaScreen> {
                       );
                     },
                   )
-                : const Text(
+                : Text(
                     'Esta fuente no tiene cobertura disponible para la ubicación seleccionada.',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: AppColors.mutedText(context)),
                   ),
           ),
           if (source.alerts.isNotEmpty)
@@ -1261,7 +1333,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
                       Expanded(
                         child: Text(
                           alert,
-                          style: const TextStyle(fontSize: 12),
+                          style: TextStyle(
+                            color: AppColors.primaryText(context),
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -1272,7 +1347,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.08),
+              color: AppColors.subtleBackground(context),
               borderRadius: const BorderRadius.vertical(
                 bottom: Radius.circular(20),
               ),
@@ -1284,7 +1359,10 @@ class _ClimaScreenState extends State<ClimaScreen> {
                   _disabled.contains(source.id)
                       ? 'Fuente desactivada'
                       : 'Fuente activa',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Switch(
                   value: !_disabled.contains(source.id),
@@ -1359,10 +1437,10 @@ class _ChartLegendDot extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: AppColors.primaryText(context),
           ),
         ),
       ],

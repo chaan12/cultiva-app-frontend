@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/routes/main_navigation.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/state/app_store.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
@@ -21,7 +22,7 @@ class DashboardScreen extends StatelessWidget {
     final featuredRecommended = recommended.take(3).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: AppColors.screenBackground(context),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -44,8 +45,8 @@ class DashboardScreen extends StatelessWidget {
                       children: [
                         Text(
                           store.currentSeason,
-                          style: const TextStyle(
-                            color: Color(0xFF0D5D33),
+                          style: TextStyle(
+                            color: AppColors.greenText(context),
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
@@ -55,17 +56,19 @@ class DashboardScreen extends StatelessWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF9FBF0),
+                            color: AppColors.subtleBackground(context),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE2E9D8)),
+                            border: Border.all(
+                              color: AppColors.border(context),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Ranking sugerido para sembrar ahora',
                                 style: TextStyle(
-                                  color: Colors.grey,
+                                  color: AppColors.mutedText(context),
                                   fontSize: 12,
                                 ),
                               ),
@@ -110,9 +113,9 @@ class DashboardScreen extends StatelessWidget {
                               onPressed: () =>
                                   _showAllRecommendations(context, recommended),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF0D5D33),
-                                side: const BorderSide(
-                                  color: Color(0xFF0D5D33),
+                                foregroundColor: AppColors.greenText(context),
+                                side: BorderSide(
+                                  color: AppColors.greenText(context),
                                 ),
                                 minimumSize: const Size(132, 50),
                               ),
@@ -254,19 +257,23 @@ class DashboardScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         _metricRow(
+                          context,
                           'Cultivos activos',
                           store.activeCropsCount.toString(),
                         ),
                         _metricRow(
+                          context,
                           'Superficie total',
                           '${store.totalHectares.toStringAsFixed(1)} ha',
                         ),
                         _metricRow(
+                          context,
                           'Eventos próximos',
                           store.upcomingEventsCount.toString(),
                         ),
                         if (store.nextPendingEventCrop != null)
                           _metricRow(
+                            context,
                             'Próximo hito',
                             '${store.nextPendingEventCrop!.name}: ${CropTrackingService.buildSummary(store.nextPendingEventCrop!).nextEventLabel}',
                           ),
@@ -279,12 +286,16 @@ class DashboardScreen extends StatelessWidget {
                       title: 'Alerta climática',
                       subtitle: 'Basada en API real',
                       icon: Icons.warning_amber_rounded,
-                      backgroundColor: const Color(0xFFFFFDE7),
+                      backgroundColor: AppColors.isDark(context)
+                          ? const Color(0xFF2A2412)
+                          : const Color(0xFFFFFDE7),
                       child: Text(
                         weather.alerts.first,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF856404),
+                          color: AppColors.isDark(context)
+                              ? const Color(0xFFFFE08A)
+                              : const Color(0xFF856404),
                         ),
                       ),
                     ),
@@ -374,9 +385,9 @@ class DashboardScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E9D8)),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -390,13 +401,16 @@ class DashboardScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.dashboard_customize, color: Color(0xFF0D5D33)),
+              Icon(
+                Icons.dashboard_customize,
+                color: AppColors.greenText(context),
+              ),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Panel de hoy',
                   style: TextStyle(
-                    color: Color(0xFF0D5D33),
+                    color: AppColors.greenText(context),
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                   ),
@@ -413,6 +427,7 @@ class DashboardScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: _overviewTile(
+                  context,
                   icon: Icons.thermostat,
                   label: 'Clima',
                   value: weather == null
@@ -428,6 +443,7 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _overviewTile(
+                  context,
                   icon: Icons.event_available,
                   label: 'Próximo hito',
                   value: nextSummary?.nextEventLabel ?? 'Sin tareas',
@@ -463,9 +479,9 @@ class DashboardScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FBF0),
+                color: AppColors.subtleBackground(context),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFE2E9D8)),
+                border: Border.all(color: AppColors.border(context)),
               ),
               child: Row(
                 children: [
@@ -481,23 +497,29 @@ class DashboardScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Mejor opción para revisar',
-                          style: TextStyle(color: Colors.black54, fontSize: 12),
+                          style: TextStyle(
+                            color: AppColors.mutedText(context),
+                            fontSize: 12,
+                          ),
                         ),
                         Text(
                           '${bestCrop.name} · ${bestCrop.sowingWindow}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF0D5D33),
+                          style: TextStyle(
+                            color: AppColors.greenText(context),
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right, color: Color(0xFF0D5D33)),
+                  Icon(
+                    Icons.chevron_right,
+                    color: AppColors.greenText(context),
+                  ),
                 ],
               ),
             ),
@@ -512,6 +534,7 @@ class DashboardScreen extends StatelessWidget {
       children: [
         Expanded(
           child: _quickAction(
+            context,
             icon: Icons.add_circle_outline,
             label: 'Registrar',
             color: const Color(0xFF00A344),
@@ -526,15 +549,17 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _quickAction(
+            context,
             icon: Icons.spa_outlined,
             label: 'Catálogo',
-            color: const Color(0xFF0D5D33),
+            color: AppColors.greenText(context),
             onTap: () => MainNavigation.of(context)?.goToTab(2),
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _quickAction(
+            context,
             icon: Icons.cloud_outlined,
             label: 'Clima',
             color: const Color(0xFF1565C0),
@@ -545,7 +570,8 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _overviewTile({
+  Widget _overviewTile(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required String value,
@@ -563,8 +589,13 @@ class DashboardScreen extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 124),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: background,
+            color: AppColors.isDark(context)
+                ? color.withValues(alpha: 0.12)
+                : background,
             borderRadius: BorderRadius.circular(18),
+            border: AppColors.isDark(context)
+                ? Border.all(color: color.withValues(alpha: 0.26))
+                : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -580,7 +611,10 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 label,
-                style: const TextStyle(color: Colors.black54, fontSize: 12),
+                style: TextStyle(
+                  color: AppColors.mutedText(context),
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 3),
               Text(
@@ -598,7 +632,10 @@ class DashboardScreen extends StatelessWidget {
                 detail,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.black54, fontSize: 12),
+                style: TextStyle(
+                  color: AppColors.mutedText(context),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -607,7 +644,8 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _quickAction({
+  Widget _quickAction(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required Color color,
@@ -620,9 +658,9 @@ class DashboardScreen extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 82),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBackground(context),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE2E9D8)),
+          border: Border.all(color: AppColors.border(context)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -645,14 +683,17 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _metricRow(String label, String value) {
+  Widget _metricRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(label, style: const TextStyle(color: Colors.grey)),
+            child: Text(
+              label,
+              style: TextStyle(color: AppColors.mutedText(context)),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -692,9 +733,9 @@ class DashboardScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.cardBackground(context),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE2E9D8)),
+            border: Border.all(color: AppColors.border(context)),
           ),
           child: Row(
             children: [
@@ -720,7 +761,7 @@ class DashboardScreen extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9),
+                            color: AppColors.greenIconBackground(context),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -736,10 +777,10 @@ class DashboardScreen extends StatelessWidget {
                         Expanded(
                           child: Text(
                             item.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0D5D33),
+                              color: AppColors.greenText(context),
                             ),
                           ),
                         ),
@@ -748,12 +789,12 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       '${item.sowingWindow} • ${item.cycleDays} días',
-                      style: const TextStyle(color: Colors.black54),
+                      style: TextStyle(color: AppColors.mutedText(context)),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Color(0xFF0D5D33)),
+              Icon(Icons.chevron_right, color: AppColors.greenText(context)),
             ],
           ),
         ),
@@ -768,7 +809,7 @@ class DashboardScreen extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: AppColors.screenBackground(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -796,9 +837,9 @@ class DashboardScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Ordenados por temporada actual y ventana de siembra.',
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(color: AppColors.mutedText(context)),
                 ),
                 const SizedBox(height: 16),
                 Flexible(

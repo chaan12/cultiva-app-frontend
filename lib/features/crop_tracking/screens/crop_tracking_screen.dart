@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
 import '../models/crop_tracking_models.dart';
 import '../services/crop_tracking_service.dart';
@@ -33,7 +34,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
     final plan = _plan;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -79,13 +80,21 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
             children: [
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.chevron_left, color: Colors.white, size: 32),
+                icon: const Icon(
+                  Icons.chevron_left,
+                  color: Colors.white,
+                  size: 32,
+                ),
                 padding: EdgeInsets.zero,
                 alignment: Alignment.centerLeft,
               ),
               IconButton(
                 onPressed: _editCrop,
-                icon: const Icon(Icons.edit_outlined, color: Colors.white, size: 28),
+                icon: const Icon(
+                  Icons.edit_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
                 tooltip: 'Editar cultivo',
               ),
             ],
@@ -179,21 +188,23 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Row(
         children: [
           CircleAvatar(
             backgroundColor: notifications
-                ? const Color(0xFFE8F5E9)
-                : Colors.grey[100],
+                ? AppColors.greenIconBackground(context)
+                : AppColors.subtleBackground(context),
             child: Icon(
               notifications
                   ? Icons.notifications_active
                   : Icons.notifications_off,
-              color: notifications ? const Color(0xFF0D5D33) : Colors.grey,
+              color: notifications
+                  ? AppColors.greenText(context)
+                  : AppColors.mutedText(context),
             ),
           ),
           const SizedBox(width: 15),
@@ -201,13 +212,19 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Notificaciones',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   notifications ? 'Alertas activas' : 'Alertas desactivadas',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -227,7 +244,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -256,14 +273,16 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? Colors.white : Colors.grey,
+                color: isSelected ? Colors.white : AppColors.mutedText(context),
                 size: 18,
               ),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.grey,
+                  color: isSelected
+                      ? Colors.white
+                      : AppColors.mutedText(context),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -288,7 +307,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: priorityColor.withValues(alpha: 0.3),
@@ -315,14 +334,18 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                 children: [
                   Text(
                     event.task,
-                    style: const TextStyle(
+                    style: TextStyle(
+                      color: AppColors.primaryText(context),
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),
                   ),
                   Text(
                     event.description,
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                    style: TextStyle(
+                      color: AppColors.mutedText(context),
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -348,24 +371,24 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
       key: const ValueKey('timeline_view'),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Línea de tiempo del cultivo',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0D5D33),
+              color: AppColors.greenText(context),
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Etapas fenológicas calculadas con base en los días transcurridos del cultivo.',
-            style: TextStyle(color: Colors.grey, height: 1.4),
+            style: TextStyle(color: AppColors.mutedText(context), height: 1.4),
           ),
           const SizedBox(height: 25),
           ...stages.asMap().entries.map(
@@ -380,13 +403,18 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
   Widget _timelineItem(CropTimelineStage stage, bool isLast) {
     final isCompleted = stage.completed;
     final isCurrent = stage.current;
+    final isDark = AppColors.isDark(context);
     final iconBgColor = isCompleted
         ? const Color(0xFF7CB342)
-        : (isCurrent ? const Color(0xFF33691E) : Colors.white);
-    final iconColor = isCurrent || isCompleted ? Colors.white : Colors.grey;
+        : (isCurrent
+              ? const Color(0xFF33691E)
+              : AppColors.subtleBackground(context));
+    final iconColor = isCurrent || isCompleted
+        ? Colors.white
+        : AppColors.mutedText(context);
     final connectorColor = isCompleted
         ? const Color(0xFF7CB342)
-        : Colors.grey.shade200;
+        : (isDark ? AppColors.border(context) : Colors.grey.shade200);
 
     return IntrinsicHeight(
       child: Row(
@@ -401,14 +429,16 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                   color: iconBgColor,
                   borderRadius: BorderRadius.circular(16),
                   border: !isCurrent && !isCompleted
-                      ? Border.all(color: Colors.grey.shade200)
+                      ? Border.all(color: AppColors.border(context))
                       : null,
                   boxShadow: isCurrent
-                      ? const [
+                      ? [
                           BoxShadow(
-                            color: Colors.black12,
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.25 : 0.08,
+                            ),
                             blurRadius: 10,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           ),
                         ]
                       : null,
@@ -445,8 +475,8 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: isCurrent || isCompleted
-                                ? const Color(0xFF2E7D32)
-                                : Colors.black54,
+                                ? AppColors.greenText(context)
+                                : AppColors.primaryText(context),
                           ),
                         ),
                       ),
@@ -485,15 +515,18 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                   const SizedBox(height: 6),
                   Text(
                     stage.date,
-                    style: const TextStyle(
-                      color: Color(0xFF0D5D33),
+                    style: TextStyle(
+                      color: AppColors.greenText(context),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     stage.description,
-                    style: const TextStyle(color: Colors.grey, height: 1.4),
+                    style: TextStyle(
+                      color: AppColors.mutedText(context),
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),

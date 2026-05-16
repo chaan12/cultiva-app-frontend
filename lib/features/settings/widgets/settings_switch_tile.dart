@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+
 class SettingsSwitchTile extends StatelessWidget {
   const SettingsSwitchTile({
     super.key,
@@ -22,7 +24,7 @@ class SettingsSwitchTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey[700]),
+          Icon(icon, color: AppColors.mutedText(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -34,7 +36,10 @@ class SettingsSwitchTile extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),

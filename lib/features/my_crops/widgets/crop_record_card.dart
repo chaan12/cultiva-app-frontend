@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../crop_tracking/services/crop_tracking_service.dart';
 import '../../../shared/models/crop_record.dart';
 
@@ -46,7 +47,7 @@ class CropRecordCard extends StatelessWidget {
     final summary = CropTrackingService.buildSummary(crop);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -81,7 +82,7 @@ class CropRecordCard extends StatelessWidget {
                     ),
                     Text(
                       '${crop.formattedArea} • Día ${crop.daysSinceSowing}/${crop.cycleDays}',
-                      style: const TextStyle(color: Colors.black54),
+                      style: TextStyle(color: AppColors.mutedText(context)),
                     ),
                     Text(
                       crop.locationName,
@@ -112,10 +113,7 @@ class CropRecordCard extends StatelessWidget {
                     ),
                     if (onComplete != null || onDelete != null)
                       PopupMenuButton<String>(
-                        icon: const Icon(
-                          Icons.more_vert,
-                          color: Colors.black54,
-                        ),
+                        icon: const Icon(Icons.more_vert, color: Colors.grey),
                         onSelected: (value) {
                           if (value == 'edit') {
                             onEdit?.call();
@@ -155,12 +153,16 @@ class CropRecordCard extends StatelessWidget {
                               value: 'delete',
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete_outline,
-                                      size: 20, color: Colors.redAccent),
+                                  Icon(
+                                    Icons.delete_outline,
+                                    size: 20,
+                                    color: Colors.redAccent,
+                                  ),
                                   SizedBox(width: 8),
-                                  Text('Borrar cultivo',
-                                      style:
-                                          TextStyle(color: Colors.redAccent)),
+                                  Text(
+                                    'Borrar cultivo',
+                                    style: TextStyle(color: Colors.redAccent),
+                                  ),
                                 ],
                               ),
                             ),

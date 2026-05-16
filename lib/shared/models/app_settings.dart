@@ -8,6 +8,7 @@ class AppSettings {
     required this.droughtAlerts,
     required this.heatAlerts,
     required this.allowMobileData,
+    required this.darkMode,
     required this.autoLocation,
     required this.locationName,
     this.latitude,
@@ -24,6 +25,7 @@ class AppSettings {
       droughtAlerts: true,
       heatAlerts: false,
       allowMobileData: true,
+      darkMode: false,
       autoLocation: true,
       locationName: 'Mérida, Yucatán',
     );
@@ -77,6 +79,7 @@ class AppSettings {
       droughtAlerts: readBool('droughtAlerts', defaults.droughtAlerts),
       heatAlerts: readBool('heatAlerts', defaults.heatAlerts),
       allowMobileData: readBool('allowMobileData', defaults.allowMobileData),
+      darkMode: readBool('darkMode', defaults.darkMode),
       autoLocation: readBool('autoLocation', defaults.autoLocation),
       locationName: readString('locationName', defaults.locationName),
       latitude: readDouble('latitude'),
@@ -92,6 +95,7 @@ class AppSettings {
   final bool droughtAlerts;
   final bool heatAlerts;
   final bool allowMobileData;
+  final bool darkMode;
   final bool autoLocation;
   final String locationName;
   final double? latitude;
@@ -107,6 +111,7 @@ class AppSettings {
       'droughtAlerts': droughtAlerts,
       'heatAlerts': heatAlerts,
       'allowMobileData': allowMobileData,
+      'darkMode': darkMode,
       'autoLocation': autoLocation,
       'locationName': locationName,
       'latitude': latitude,
@@ -123,6 +128,7 @@ class AppSettings {
     bool? droughtAlerts,
     bool? heatAlerts,
     bool? allowMobileData,
+    bool? darkMode,
     bool? autoLocation,
     String? locationName,
     double? latitude,
@@ -138,6 +144,7 @@ class AppSettings {
       droughtAlerts: droughtAlerts ?? this.droughtAlerts,
       heatAlerts: heatAlerts ?? this.heatAlerts,
       allowMobileData: allowMobileData ?? this.allowMobileData,
+      darkMode: darkMode ?? this.darkMode,
       autoLocation: autoLocation ?? this.autoLocation,
       locationName: locationName ?? this.locationName,
       latitude: clearCoordinates ? null : (latitude ?? this.latitude),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+
 class RegisterFieldCard extends StatelessWidget {
   const RegisterFieldCard({
     super.key,
@@ -29,10 +31,12 @@ class RegisterFieldCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: errorText == null ? Colors.black12 : Colors.red.shade300,
+          color: errorText == null
+              ? AppColors.border(context)
+              : Colors.red.shade300,
         ),
       ),
       child: Row(
@@ -66,7 +70,7 @@ class RegisterFieldCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F8E9),
+                    color: AppColors.subtleBackground(context),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: errorText == null

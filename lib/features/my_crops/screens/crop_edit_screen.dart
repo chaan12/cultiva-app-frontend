@@ -134,7 +134,7 @@ class _CropEditScreenState extends State<CropEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         top: false,
         child: Column(

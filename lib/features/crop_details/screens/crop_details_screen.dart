@@ -20,7 +20,7 @@ class CropDetailsScreen extends StatelessWidget {
     final lightTint = accent.withValues(alpha: 0.10);
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -30,6 +30,7 @@ class CropDetailsScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _spotlightCard(
+                    context,
                     accent: accent,
                     child: Column(
                       children: [
@@ -37,6 +38,7 @@ class CropDetailsScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _dataTile(
+                                context,
                                 icon: Icons.calendar_today,
                                 title: 'Siembra',
                                 value: crop.sowingWindow,
@@ -47,6 +49,7 @@ class CropDetailsScreen extends StatelessWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _dataTile(
+                                context,
                                 icon: Icons.spa,
                                 title: 'Cosecha',
                                 value: crop.harvestWindow,
@@ -61,6 +64,7 @@ class CropDetailsScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _miniFact(
+                                context,
                                 label: 'Densidad',
                                 value: crop.plantingDensity,
                                 accent: accent,
@@ -69,6 +73,7 @@ class CropDetailsScreen extends StatelessWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _miniFact(
+                                context,
                                 label: 'pH',
                                 value: crop.soilPh,
                                 accent: accent,
@@ -80,6 +85,7 @@ class CropDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   _sectionCard(
+                    context,
                     title: 'Condiciones recomendadas',
                     icon: Icons.thermostat_outlined,
                     accent: accent,
@@ -87,15 +93,18 @@ class CropDetailsScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         _bulletRow(
+                          context,
                           icon: Icons.device_thermostat_outlined,
                           text: 'Temperatura ideal: ${crop.idealTemperature}',
                         ),
                         _bulletRow(
+                          context,
                           icon: Icons.water_drop_outlined,
                           text:
                               'Requerimiento hídrico: ${crop.waterRequirement}',
                         ),
                         _bulletRow(
+                          context,
                           icon: Icons.wb_sunny_outlined,
                           text: 'Exposición solar: ${crop.sunExposure}',
                         ),
@@ -103,20 +112,24 @@ class CropDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   _sectionCard(
+                    context,
                     title: 'Suelo y establecimiento',
                     icon: Icons.landscape_outlined,
                     accent: accent,
                     child: Column(
                       children: [
                         _bulletRow(
+                          context,
                           icon: Icons.grass_outlined,
                           text: 'Tipo de suelo: ${crop.soilType}',
                         ),
                         _bulletRow(
+                          context,
                           icon: Icons.science_outlined,
                           text: 'pH recomendado: ${crop.soilPh}',
                         ),
                         _bulletRow(
+                          context,
                           icon: Icons.scatter_plot_outlined,
                           text: 'Densidad de siembra: ${crop.plantingDensity}',
                         ),
@@ -124,6 +137,7 @@ class CropDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   _sectionCard(
+                    context,
                     title: 'Nutrición y rendimiento',
                     icon: Icons.bar_chart_rounded,
                     accent: accent,
@@ -152,6 +166,7 @@ class CropDetailsScreen extends StatelessWidget {
                           (item) => Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: _bulletRow(
+                              context,
                               icon: Icons.eco_outlined,
                               text: item,
                             ),
@@ -161,36 +176,42 @@ class CropDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   _sectionCard(
+                    context,
                     title: 'Sanidad del cultivo',
                     icon: Icons.bug_report_outlined,
                     accent: accent,
                     child: Wrap(
                       spacing: 10,
                       runSpacing: 10,
-                      children: crop.pests
-                          .map(
-                            (item) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF1EC),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: const Color(0xFFFFD0BF),
-                                ),
-                              ),
-                              child: Text(
-                                item,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF9A3412),
-                                ),
-                              ),
+                      children: crop.pests.map((item) {
+                        final isDark = AppColors.isDark(context);
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF341D16)
+                                : const Color(0xFFFFF1EC),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF7C2D12)
+                                  : const Color(0xFFFFD0BF),
                             ),
-                          )
-                          .toList(),
+                          ),
+                          child: Text(
+                            item,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? const Color(0xFFFDBA74)
+                                  : const Color(0xFF9A3412),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -198,7 +219,7 @@ class CropDetailsScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.cardBackground(context),
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
@@ -211,18 +232,21 @@ class CropDetailsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Acciones',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.greenDark,
+                            color: AppColors.greenText(context),
                           ),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
+                        Text(
                           'Descarga la ficha técnica o registra una plantación de este cultivo.',
-                          style: TextStyle(color: Colors.grey, height: 1.4),
+                          style: TextStyle(
+                            color: AppColors.mutedText(context),
+                            height: 1.4,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
@@ -480,12 +504,16 @@ class CropDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _spotlightCard({required Color accent, required Widget child}) {
+  Widget _spotlightCard(
+    BuildContext context, {
+    required Color accent,
+    required Widget child,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
@@ -499,36 +527,45 @@ class CropDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _dataTile({
+  Widget _dataTile(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String value,
     required Color color,
     required Color background,
   }) {
+    final isDark = AppColors.isDark(context);
+    final foreground = isDark ? Color.lerp(color, Colors.white, 0.25)! : color;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: background,
+        color: isDark ? color.withValues(alpha: 0.12) : background,
         borderRadius: BorderRadius.circular(22),
+        border: isDark
+            ? Border.all(color: color.withValues(alpha: 0.30))
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: color.withValues(alpha: 0.15),
-            child: Icon(icon, color: color, size: 20),
+            backgroundColor: color.withValues(alpha: isDark ? 0.22 : 0.15),
+            child: Icon(icon, color: foreground, size: 20),
           ),
           const SizedBox(height: 12),
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(
+            title,
+            style: TextStyle(color: AppColors.mutedText(context), fontSize: 12),
+          ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 15,
-              color: AppColors.greenDark,
+              color: foreground,
             ),
           ),
         ],
@@ -536,27 +573,35 @@ class CropDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _miniFact({
+  Widget _miniFact(
+    BuildContext context, {
     required String label,
     required String value,
     required Color accent,
   }) {
+    final isDark = AppColors.isDark(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
+        color: accent.withValues(alpha: isDark ? 0.13 : 0.08),
         borderRadius: BorderRadius.circular(18),
+        border: isDark
+            ? Border.all(color: accent.withValues(alpha: 0.20))
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(
+            label,
+            style: TextStyle(color: AppColors.mutedText(context), fontSize: 12),
+          ),
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.greenDark,
+              color: AppColors.greenText(context),
             ),
           ),
         ],
@@ -564,21 +609,27 @@ class CropDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _sectionCard({
+  Widget _sectionCard(
+    BuildContext context, {
     required String title,
     required IconData icon,
     required Color accent,
     required Widget child,
-    Color background = Colors.white,
+    Color? background,
   }) {
+    final isDark = AppColors.isDark(context);
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: background,
+        color: isDark
+            ? AppColors.cardBackground(context)
+            : background ?? AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: accent.withValues(alpha: 0.12)),
+        border: Border.all(
+          color: accent.withValues(alpha: isDark ? 0.25 : 0.12),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -599,10 +650,10 @@ class CropDetailsScreen extends StatelessWidget {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
-                    color: AppColors.greenDark,
+                    color: AppColors.greenText(context),
                   ),
                 ),
               ),
@@ -615,18 +666,25 @@ class CropDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _bulletRow({required IconData icon, required String text}) {
+  Widget _bulletRow(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: AppColors.greenDark),
+          Icon(icon, size: 18, color: AppColors.greenText(context)),
           const SizedBox(width: 10),
           Flexible(
             child: Text(
               text,
-              style: const TextStyle(height: 1.4),
+              style: TextStyle(
+                color: AppColors.primaryText(context),
+                height: 1.4,
+              ),
               softWrap: true,
             ),
           ),

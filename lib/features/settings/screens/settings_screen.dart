@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/app_location.dart';
 import '../../../shared/services/location_service.dart';
 import '../../../shared/services/location_options_service.dart';
@@ -122,7 +123,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         : LocationOptionsService.optionsForState(_selectedState!);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: AppColors.screenBackground(context),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -132,6 +133,28 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 20),
+                  SettingsSectionCard(
+                    icon: settings.darkMode
+                        ? Icons.dark_mode_outlined
+                        : Icons.light_mode_outlined,
+                    title: 'Apariencia',
+                    subtitle: 'Tema visual de la app',
+                    child: SettingsSwitchTile(
+                      icon: Icons.dark_mode_outlined,
+                      title: 'Modo oscuro',
+                      subtitle: 'Usar colores oscuros en toda la app',
+                      value: settings.darkMode,
+                      onChanged: (value) => _toggleSetting(
+                        () => store.updateSettings(
+                          settings.copyWith(darkMode: value),
+                        ),
+                        value
+                            ? 'Modo oscuro activado.'
+                            : 'Modo claro activado.',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   SettingsSectionCard(
                     icon: Icons.notifications_none,
                     title: 'Notificaciones',
@@ -304,23 +327,19 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF0D5D33,
-                            ).withValues(alpha: 0.05),
+                            color: AppColors.subtleBackground(context),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: const Color(
-                                0xFF0D5D33,
-                              ).withValues(alpha: 0.1),
+                              color: AppColors.border(context),
                             ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Ubicación activa',
                                 style: TextStyle(
-                                  color: Colors.grey,
+                                  color: AppColors.mutedText(context),
                                   fontSize: 12,
                                 ),
                               ),
@@ -353,7 +372,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                     : _selectedState,
                                 decoration: InputDecoration(
                                   filled: true,
-                                  fillColor: Colors.white,
                                   hintText: 'Selecciona estado',
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -387,7 +405,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                     : _selectedLocation,
                                 decoration: InputDecoration(
                                   filled: true,
-                                  fillColor: Colors.white,
                                   hintText: _selectedState == null
                                       ? 'Elige un estado primero'
                                       : 'Selecciona ciudad o municipio',
@@ -423,7 +440,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                 textInputAction: TextInputAction.done,
                                 decoration: InputDecoration(
                                   filled: true,
-                                  fillColor: Colors.white,
                                   hintText:
                                       'O escribe ciudad, municipio, estado',
                                   prefixIcon: const Icon(Icons.search),
@@ -690,7 +706,9 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: active ? color.withValues(alpha: 0.1) : Colors.grey[100],
+          color: active
+              ? color.withValues(alpha: 0.1)
+              : AppColors.subtleBackground(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: active ? color : Colors.transparent,
@@ -732,8 +750,8 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.black54,
+                style: TextStyle(
+                  color: AppColors.mutedText(context),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),

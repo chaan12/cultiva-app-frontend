@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/state/app_store.dart';
@@ -17,7 +18,7 @@ class MyCropsScreen extends StatelessWidget {
     final store = AppScope.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -30,15 +31,18 @@ class MyCropsScreen extends StatelessWidget {
                   const SizedBox(height: 25),
                   Row(
                     children: [
-                      const Icon(Icons.trending_up, color: Color(0xFF0D5D33)),
+                      Icon(
+                        Icons.trending_up,
+                        color: AppColors.greenText(context),
+                      ),
                       const SizedBox(width: 8),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Cultivos activos',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0D5D33),
+                            color: AppColors.greenText(context),
                           ),
                         ),
                       ),
@@ -83,23 +87,24 @@ class MyCropsScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.7),
+                        color: AppColors.cardBackground(context),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.black12),
+                        border: Border.all(color: AppColors.border(context)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.agriculture_rounded,
-                            color: Color(0xFF00C853),
+                            color: AppColors.greenText(context),
                             size: 30,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               '${store.nextPendingEventCrop!.name}: ${CropTrackingService.buildSummary(store.nextPendingEventCrop!).nextEventLabel}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
+                                color: AppColors.primaryText(context),
                               ),
                             ),
                           ),
@@ -208,27 +213,32 @@ class MyCropsScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.agriculture_outlined,
             size: 48,
-            color: Color(0xFF0D5D33),
+            color: AppColors.greenText(context),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Aún no tienes cultivos registrados.',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Agrega tu primer cultivo para empezar a ver métricas reales.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.mutedText(context)),
           ),
           const SizedBox(height: 18),
           ElevatedButton(
@@ -333,7 +343,7 @@ class MyCropsScreen extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -356,17 +366,21 @@ class MyCropsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Text(
+                Text(
                   'Historial de cultivos',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 if (history.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Text(
                       'Aún no tienes cultivos completados.',
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(color: AppColors.mutedText(context)),
                     ),
                   )
                 else
@@ -380,9 +394,11 @@ class MyCropsScreen extends StatelessWidget {
                         return Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.cardBackground(context),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.black12),
+                            border: Border.all(
+                              color: AppColors.border(context),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,7 +408,8 @@ class MyCropsScreen extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       crop.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
+                                        color: AppColors.primaryText(context),
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -407,12 +424,16 @@ class MyCropsScreen extends StatelessWidget {
                               const SizedBox(height: 6),
                               Text(
                                 '${crop.formattedArea} • ${crop.locationName}',
-                                style: const TextStyle(color: Colors.black54),
+                                style: TextStyle(
+                                  color: AppColors.mutedText(context),
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Completado el ${crop.completedAt == null ? crop.formattedSowingDate : '${crop.completedAt!.day.toString().padLeft(2, '0')}/${crop.completedAt!.month.toString().padLeft(2, '0')}/${crop.completedAt!.year}'}',
-                                style: const TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  color: AppColors.mutedText(context),
+                                ),
                               ),
                             ],
                           ),

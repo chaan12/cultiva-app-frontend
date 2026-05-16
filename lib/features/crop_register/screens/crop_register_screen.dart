@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
@@ -29,11 +30,13 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
   CropCatalogItem? _selectedCrop;
   bool _showSuccess = false;
   final _areaController = TextEditingController();
+  final _cropSearchController = TextEditingController();
   final _dateController = TextEditingController();
   final _locationController = TextEditingController();
   DateTime? _selectedDate;
   Timer? _successTimer;
   Map<String, String> _errors = <String, String>{};
+  String _cropQuery = '';
 
   @override
   void didChangeDependencies() {
@@ -53,9 +56,23 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
   void dispose() {
     _successTimer?.cancel();
     _areaController.dispose();
+    _cropSearchController.dispose();
     _dateController.dispose();
     _locationController.dispose();
     super.dispose();
+  }
+
+  String _normalizeCropSearch(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u')
+        .replaceAll('ü', 'u')
+        .replaceAll('ñ', 'n');
   }
 
   Future<void> _pickDate() async {
@@ -154,7 +171,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
         MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F4E0),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         top: false,
         child: Column(
@@ -236,43 +253,123 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
   }
 
   Widget _buildSelectCrop(bool isLandscape) {
+    final normalizedQuery = _normalizeCropSearch(_cropQuery);
+    final cropOptions = CropCatalogService.items.where((item) {
+      return _normalizeCropSearch(item.name).contains(normalizedQuery) ||
+          _normalizeCropSearch(item.season).contains(normalizedQuery) ||
+          _normalizeCropSearch(item.description).contains(normalizedQuery);
+    }).toList();
+
     return Column(
       key: const ValueKey<int>(1),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 25),
-        const Text(
+        Text(
           '¿Qué vas a sembrar?',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        const Text(
-          'Selecciona el tipo de cultivo para tu nueva plantación',
-          style: TextStyle(color: Colors.black54),
-        ),
-        const SizedBox(height: 25),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: CropCatalogService.items.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isLandscape ? 3 : 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: isLandscape ? 0.85 : 0.7,
+          style: TextStyle(
+            color: AppColors.primaryText(context),
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
           ),
-          itemBuilder: (_, index) {
-            final item = CropCatalogService.items[index];
-            return CropOptionCard(
-              item: item,
-              onTap: () {
-                setState(() {
-                  _selectedCrop = item;
-                  _step = 2;
-                });
-              },
-            );
-          },
         ),
+        Text(
+          'Selecciona el tipo de cultivo para tu nueva plantación',
+          style: TextStyle(color: AppColors.mutedText(context)),
+        ),
+        const SizedBox(height: 18),
+        TextField(
+          controller: _cropSearchController,
+          onChanged: (value) => setState(() => _cropQuery = value),
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: 'Buscar cultivo...',
+            prefixIcon: Icon(Icons.search, color: AppColors.mutedText(context)),
+            suffixIcon: _cropQuery.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Limpiar búsqueda',
+                    onPressed: () {
+                      setState(() {
+                        _cropSearchController.clear();
+                        _cropQuery = '';
+                      });
+                    },
+                    icon: Icon(
+                      Icons.close,
+                      color: AppColors.mutedText(context),
+                    ),
+                  ),
+            filled: true,
+            fillColor: AppColors.cardBackground(context),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide(color: AppColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: const BorderSide(color: Color(0xFF0D5D33), width: 2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (cropOptions.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+            decoration: BoxDecoration(
+              color: AppColors.cardBackground(context),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.border(context)),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.search_off_outlined,
+                  color: AppColors.mutedText(context),
+                  size: 36,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'No encontramos cultivos con ese nombre.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: cropOptions.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isLandscape ? 3 : 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: isLandscape ? 0.85 : 0.7,
+            ),
+            itemBuilder: (_, index) {
+              final item = cropOptions[index];
+              return CropOptionCard(
+                item: item,
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                  setState(() {
+                    _selectedCrop = item;
+                    _step = 2;
+                  });
+                },
+              );
+            },
+          ),
         const SizedBox(height: 30),
       ],
     );
@@ -286,19 +383,23 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 25),
-        const Text(
+        Text(
           'Detalles de la plantación',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.primaryText(context),
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         Text(
           'Ingresa información de tu cultivo de ${crop.name}',
-          style: const TextStyle(color: Colors.black54),
+          style: TextStyle(color: AppColors.mutedText(context)),
         ),
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.cardBackground(context),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: crop.badgeColor.withValues(alpha: 0.35)),
           ),
@@ -319,14 +420,18 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
                   children: [
                     Text(
                       crop.name,
-                      style: const TextStyle(
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
                     ),
                     Text(
                       'Ciclo: ${crop.cycleDays} días • ${crop.season}',
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(
+                        color: AppColors.mutedText(context),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -410,21 +515,25 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 25),
-        const Text(
+        Text(
           'Confirma tu registro',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.primaryText(context),
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        const Text(
+        Text(
           'Revisa que toda la información sea correcta',
-          style: TextStyle(color: Colors.black54),
+          style: TextStyle(color: AppColors.mutedText(context)),
         ),
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.cardBackground(context),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.black12),
+            border: Border.all(color: AppColors.border(context)),
           ),
           child: Column(
             children: [
@@ -441,14 +550,15 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
                   const SizedBox(width: 12),
                   Text(
                     crop.name,
-                    style: const TextStyle(
+                    style: TextStyle(
+                      color: AppColors.primaryText(context),
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              const Divider(height: 30, color: Colors.black12),
+              Divider(height: 30, color: AppColors.border(context)),
               _confirmRow(
                 Icons.map_outlined,
                 'Área',
@@ -468,7 +578,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
               Container(
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: AppColors.greenIconBackground(context),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Column(
@@ -546,7 +656,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
         Text(
           'Tu cultivo de ${_selectedCrop?.name} se guardó localmente.',
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.black54, fontSize: 16),
+          style: TextStyle(color: AppColors.mutedText(context), fontSize: 16),
         ),
       ],
     );
@@ -557,7 +667,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF0D5D33)),
+          Icon(icon, color: AppColors.greenText(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -565,14 +675,17 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 12,
+                  ),
                 ),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Color(0xFF0D5D33),
+                    color: AppColors.greenText(context),
                   ),
                 ),
               ],
@@ -583,18 +696,17 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
     );
   }
 
-  Widget _timelineRow(
-    String label,
-    String value, {
-    Color valueColor = Colors.black,
-  }) {
+  Widget _timelineRow(String label, String value, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey)),
+        Text(label, style: TextStyle(color: AppColors.mutedText(context))),
         Text(
           value,
-          style: TextStyle(fontWeight: FontWeight.bold, color: valueColor),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? AppColors.primaryText(context),
+          ),
         ),
       ],
     );

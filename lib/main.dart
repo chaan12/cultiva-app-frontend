@@ -24,11 +24,20 @@ class CultivaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScope(
       store: store,
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Cultiva+',
-        theme: AppTheme.lightTheme,
-        home: const SplashScreen(),
+      child: AnimatedBuilder(
+        animation: store,
+        builder: (context, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Cultiva+',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: store.settings.darkMode
+                ? ThemeMode.dark
+                : ThemeMode.light,
+            home: const SplashScreen(),
+          );
+        },
       ),
     );
   }

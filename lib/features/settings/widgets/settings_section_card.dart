@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+
 class SettingsSectionCard extends StatelessWidget {
   const SettingsSectionCard({
     super.key,
@@ -18,11 +20,13 @@ class SettingsSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.20 : 0.05,
+            ),
             blurRadius: 10,
           ),
         ],
@@ -32,7 +36,7 @@ class SettingsSectionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF0D5D33).withValues(alpha: 0.05),
+              color: AppColors.subtleBackground(context),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(24),
               ),
@@ -63,8 +67,8 @@ class SettingsSectionCard extends StatelessWidget {
                         subtitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.grey,
+                        style: TextStyle(
+                          color: AppColors.mutedText(context),
                           fontSize: 13,
                         ),
                       ),
