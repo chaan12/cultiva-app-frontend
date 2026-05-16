@@ -1,7 +1,7 @@
 # 🌱 Cultiva+
 
 <p align="center">
-  <img src="./assets/cultiva_logo.png" width="180" alt="Cultiva+ Logo"/>
+  <img src="assets/logos/cultiva_logo.png" width="180" alt="Cultiva+ Logo"/>
 </p>
 
 <p align="center">
