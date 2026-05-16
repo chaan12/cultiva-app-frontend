@@ -172,7 +172,7 @@ Funciones avanzadas y herramientas exclusivas.
 
 # 👨‍💻 Equipo
 
-| Integrante |
+| Integrantes |
 |---|
 | Eduardo Chan |
 | Fernando Arcos |

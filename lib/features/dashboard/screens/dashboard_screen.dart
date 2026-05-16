@@ -548,7 +548,7 @@ class DashboardScreen extends StatelessWidget {
                 context,
                 icon: Icons.add_circle_outline,
                 label: 'Registrar',
-                color: const Color(0xFF00A344),
+                color: AppColors.greenText(context),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -565,7 +565,7 @@ class DashboardScreen extends StatelessWidget {
                 context,
                 icon: Icons.calendar_month_outlined,
                 label: 'Calendario',
-                color: const Color(0xFF0D5D33),
+                color: AppColors.greenText(context),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -596,7 +596,7 @@ class DashboardScreen extends StatelessWidget {
                 context,
                 icon: Icons.cloud_outlined,
                 label: 'Clima',
-                color: const Color(0xFF1565C0),
+                color: const Color.fromARGB(255, 90, 167, 255),
                 onTap: () => MainNavigation.of(context)?.goToTab(3),
               ),
             ),

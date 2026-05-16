@@ -4,13 +4,15 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../features/crops_catalog/models/crop_catalog_item.dart';
-import '../../features/crops_catalog/services/crop_catalog_service.dart';
 import '../../features/crop_tracking/services/crop_tracking_service.dart';
 import '../models/app_location.dart';
 import '../models/app_settings.dart';
 import '../models/crop_record.dart';
 import '../models/weather_snapshot.dart';
+import '../services/crop_recommendation_service.dart';
+import '../services/crop_record_service.dart';
 import '../services/local_database_service.dart';
+import '../services/location_settings_service.dart';
 import '../services/location_service.dart';
 import '../services/weather_service.dart';
 
@@ -21,11 +23,19 @@ class AppStore extends ChangeNotifier {
     WeatherService? weatherService,
   }) : _databaseService = databaseService ?? LocalDatabaseService(),
        _locationService = locationService ?? LocationService(),
-       _weatherService = weatherService ?? WeatherService();
+       _weatherService = weatherService ?? WeatherService() {
+    _cropRecordService = CropRecordService(_databaseService);
+    _locationSettingsService = LocationSettingsService(
+      databaseService: _databaseService,
+      locationService: _locationService,
+    );
+  }
 
   final LocalDatabaseService _databaseService;
   final LocationService _locationService;
   final WeatherService _weatherService;
+  late final CropRecordService _cropRecordService;
+  late final LocationSettingsService _locationSettingsService;
 
   AppSettings _settings = AppSettings.defaults();
   List<CropRecord> _crops = <CropRecord>[];
@@ -114,41 +124,15 @@ class AppStore extends ChangeNotifier {
   }
 
   String get currentSeason {
-    final month = DateTime.now().month;
-    if (month >= 3 && month <= 8) {
-      return 'Primavera - Verano';
-    }
-    return 'Otoño - Invierno';
+    return CropRecommendationService.currentSeason();
   }
 
   CropCatalogItem get recommendedCropItem {
-    return recommendedCropItems.first;
+    return CropRecommendationService.recommendedCropItem();
   }
 
   List<CropCatalogItem> get recommendedCropItems {
-    final month = DateTime.now().month;
-    final currentSeasonParts = currentSeason
-        .split(' - ')
-        .map((part) => part.trim().toLowerCase())
-        .toList();
-    final ranked = [...CropCatalogService.items]
-      ..sort((a, b) {
-        final scoreA = _recommendationScore(
-          item: a,
-          month: month,
-          currentSeasonParts: currentSeasonParts,
-        );
-        final scoreB = _recommendationScore(
-          item: b,
-          month: month,
-          currentSeasonParts: currentSeasonParts,
-        );
-        if (scoreA != scoreB) {
-          return scoreB.compareTo(scoreA);
-        }
-        return a.cycleDays.compareTo(b.cycleDays);
-      });
-    return ranked;
+    return CropRecommendationService.recommendedCropItems();
   }
 
   Future<void> initialize() async {
@@ -195,15 +179,13 @@ class AppStore extends ChangeNotifier {
 
   Future<void> addCrop(CropRecord crop) async {
     await initialize();
-    await _databaseService.saveCrop(crop);
-    _crops = await _databaseService.loadCrops();
+    _crops = await _cropRecordService.saveCrop(crop);
     notifyListeners();
   }
 
   Future<void> updateCrop(CropRecord crop) async {
     await initialize();
-    await _databaseService.saveCrop(crop);
-    _crops = await _databaseService.loadCrops();
+    _crops = await _cropRecordService.saveCrop(crop);
     notifyListeners();
   }
 
@@ -212,26 +194,10 @@ class AppStore extends ChangeNotifier {
     String eventId,
   ) async {
     await initialize();
-    CropRecord? crop;
-    for (final item in _crops) {
-      if (item.id == cropId) {
-        crop = item;
-        break;
-      }
-    }
-    if (crop == null) {
-      return null;
-    }
-
-    final completedEventIds = <String>{
-      ...crop.completedEventIds,
-      eventId,
-    }.toList();
-    final updatedCrop = crop.copyWith(completedEventIds: completedEventIds);
-    await _databaseService.saveCrop(updatedCrop);
-    _crops = await _databaseService.loadCrops();
+    final result = await _cropRecordService.markEventCompleted(cropId, eventId);
+    _crops = result.crops;
     notifyListeners();
-    return updatedCrop;
+    return result.updatedCrop;
   }
 
   Future<CropRecord?> unmarkCropEventCompleted(
@@ -239,50 +205,24 @@ class AppStore extends ChangeNotifier {
     String eventId,
   ) async {
     await initialize();
-    CropRecord? crop;
-    for (final item in _crops) {
-      if (item.id == cropId) {
-        crop = item;
-        break;
-      }
-    }
-    if (crop == null) {
-      return null;
-    }
-
-    final completedEventIds = crop.completedEventIds
-        .where((id) => id != eventId)
-        .toList();
-    final updatedCrop = crop.copyWith(completedEventIds: completedEventIds);
-    await _databaseService.saveCrop(updatedCrop);
-    _crops = await _databaseService.loadCrops();
+    final result = await _cropRecordService.unmarkEventCompleted(
+      cropId,
+      eventId,
+    );
+    _crops = result.crops;
     notifyListeners();
-    return updatedCrop;
+    return result.updatedCrop;
   }
 
   Future<void> completeCrop(String cropId) async {
     await initialize();
-    CropRecord? crop;
-    for (final item in _crops) {
-      if (item.id == cropId) {
-        crop = item;
-        break;
-      }
-    }
-    if (crop == null) {
-      return;
-    }
-    await _databaseService.saveCrop(
-      crop.copyWith(isCompleted: true, completedAt: DateTime.now()),
-    );
-    _crops = await _databaseService.loadCrops();
+    _crops = await _cropRecordService.completeCrop(cropId);
     notifyListeners();
   }
 
   Future<void> deleteCrop(String cropId) async {
     await initialize();
-    await _databaseService.deleteCrop(cropId);
-    _crops = await _databaseService.loadCrops();
+    _crops = await _cropRecordService.deleteCrop(cropId);
     notifyListeners();
   }
 
@@ -297,14 +237,9 @@ class AppStore extends ChangeNotifier {
     await initialize();
     try {
       _setBusy(true);
-      final location = await _locationService.getCurrentLocation();
-      _settings = _settings.copyWith(
-        autoLocation: true,
-        locationName: location.label,
-        latitude: location.latitude,
-        longitude: location.longitude,
+      _settings = await _locationSettingsService.refreshCurrentLocation(
+        _settings,
       );
-      await _databaseService.saveSettings(_settings);
       _lastError = null;
       if (hasNetworkConnection) {
         await _refreshWeatherInternal(syncTriggeredByWifi: true);
@@ -327,14 +262,10 @@ class AppStore extends ChangeNotifier {
     }
     _setBusy(true);
     try {
-      final location = await _locationService.geocode(normalizedQuery);
-      _settings = _settings.copyWith(
-        autoLocation: false,
-        locationName: normalizedQuery,
-        latitude: location.latitude,
-        longitude: location.longitude,
+      _settings = await _locationSettingsService.saveManualLocation(
+        _settings,
+        normalizedQuery,
       );
-      await _databaseService.saveSettings(_settings);
       _lastError = null;
       if (hasNetworkConnection) {
         await _refreshWeatherInternal(syncTriggeredByWifi: true);
@@ -351,13 +282,10 @@ class AppStore extends ChangeNotifier {
     await initialize();
     _setBusy(true);
     try {
-      _settings = _settings.copyWith(
-        autoLocation: false,
-        locationName: location.label,
-        latitude: location.latitude,
-        longitude: location.longitude,
+      _settings = await _locationSettingsService.savePresetLocation(
+        _settings,
+        location,
       );
-      await _databaseService.saveSettings(_settings);
       _lastError = null;
       if (hasNetworkConnection) {
         await _refreshWeatherInternal(syncTriggeredByWifi: true);
@@ -458,37 +386,11 @@ class AppStore extends ChangeNotifier {
     bool forceCurrentLocation = false,
     bool allowGeocoding = true,
   }) async {
-    if (_settings.autoLocation) {
-      if (!forceCurrentLocation &&
-          _settings.latitude != null &&
-          _settings.longitude != null) {
-        return;
-      }
-      final location = await _locationService.getCurrentLocation();
-      _settings = _settings.copyWith(
-        autoLocation: true,
-        locationName: location.label,
-        latitude: location.latitude,
-        longitude: location.longitude,
-      );
-      await _databaseService.saveSettings(_settings);
-      return;
-    }
-
-    if (_settings.latitude != null && _settings.longitude != null) {
-      return;
-    }
-
-    if (!allowGeocoding) {
-      return;
-    }
-
-    final fallback = await _locationService.geocode(_settings.locationName);
-    _settings = _settings.copyWith(
-      latitude: fallback.latitude,
-      longitude: fallback.longitude,
+    _settings = await _locationSettingsService.ensureCoordinates(
+      _settings,
+      forceCurrentLocation: forceCurrentLocation,
+      allowGeocoding: allowGeocoding,
     );
-    await _databaseService.saveSettings(_settings);
   }
 
   void _clearWeatherIfOutdated() {
@@ -507,59 +409,6 @@ class AppStore extends ChangeNotifier {
     if (hasListeners) {
       notifyListeners();
     }
-  }
-
-  int _recommendationScore({
-    required CropCatalogItem item,
-    required int month,
-    required List<String> currentSeasonParts,
-  }) {
-    final season = item.season.toLowerCase();
-    final sowingWindow = item.sowingWindow.toLowerCase();
-    var score = 0;
-
-    if (season.contains('todo el año') ||
-        sowingWindow.contains('todo el año')) {
-      score += 40;
-    }
-    if (_windowContainsMonth(sowingWindow, month)) {
-      score += 70;
-    }
-    if (currentSeasonParts.every(season.contains)) {
-      score += 50;
-    } else {
-      for (final part in currentSeasonParts) {
-        if (season.contains(part)) {
-          score += 20;
-        }
-      }
-    }
-    score += (160 - item.cycleDays).clamp(0, 60);
-    return score;
-  }
-
-  bool _windowContainsMonth(String window, int month) {
-    final monthNames = <String, int>{
-      'enero': 1,
-      'febrero': 2,
-      'marzo': 3,
-      'abril': 4,
-      'mayo': 5,
-      'junio': 6,
-      'julio': 7,
-      'agosto': 8,
-      'septiembre': 9,
-      'setiembre': 9,
-      'octubre': 10,
-      'noviembre': 11,
-      'diciembre': 12,
-    };
-    for (final entry in monthNames.entries) {
-      if (window.contains(entry.key) && entry.value == month) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @override
