@@ -528,7 +528,7 @@ class _MonthSignalTile extends StatelessWidget {
 
     return Container(
       width: width,
-      constraints: const BoxConstraints(minHeight: 104),
+      constraints: const BoxConstraints(minHeight: 90),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08 + (intensity * 0.1)),
@@ -555,19 +555,8 @@ class _MonthSignalTile extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             _rainPlainLabel(month.precipitationMm),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5),
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: intensity,
-              minHeight: 6,
-              backgroundColor: Colors.white.withValues(alpha: 0.75),
-              color: color,
-            ),
           ),
         ],
       ),
