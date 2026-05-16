@@ -47,10 +47,12 @@ class CropTrackingService {
       final day = (event.dayFraction * totalDays).round();
       final id = _eventId(crop.cropId, index, day);
       final userCompleted = crop.completedEventIds.contains(id);
+      final scheduledDate = crop.sowingDate.add(Duration(days: day));
       return CropUpcomingEvent(
         id: id,
         task: event.task,
-        date: _formatDate(crop.sowingDate.add(Duration(days: day))),
+        date: _formatDate(scheduledDate),
+        scheduledDate: scheduledDate,
         daysUntil: day - elapsedDays,
         priority: event.priority,
         icon: event.icon,
@@ -96,6 +98,7 @@ class CropTrackingService {
       progress: progress,
       daysToHarvest: daysToHarvest,
       timelineStages: timelineStages,
+      allEvents: sortedEvents,
       upcomingEvents: upcomingEvents,
       summary: summary,
     );

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
+import '../../../shared/services/agricultural_advisory_service.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../models/crop_tracking_models.dart';
@@ -59,6 +60,8 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                       duration: const Duration(milliseconds: 300),
                       child: activeTab == 'events'
                           ? _buildEventsList(plan.upcomingEvents)
+                          : activeTab == 'history'
+                          ? _buildCropHistory()
                           : _buildTimeline(plan.timelineStages),
                     ),
                     const SizedBox(height: 40),
@@ -261,6 +264,7 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
         children: [
           _tabButton('events', Icons.bolt, 'Eventos'),
           _tabButton('timeline', Icons.auto_graph, 'Ciclo'),
+          _tabButton('history', Icons.history, 'Historial'),
         ],
       ),
     );
@@ -575,6 +579,110 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
       message: 'Evento devuelto a pendiente.',
       color: const Color(0xFF0D5D33),
       icon: Icons.undo_rounded,
+    );
+  }
+
+  Widget _buildCropHistory() {
+    final items = AgriculturalAdvisoryService.historyItems(_crop);
+
+    return Container(
+      key: const ValueKey('crop_history_view'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground(context),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.history, color: AppColors.greenText(context)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Historial del cultivo',
+                  style: TextStyle(
+                    color: AppColors.greenText(context),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Eventos concluidos por fecha o marcados manualmente.',
+            style: TextStyle(color: AppColors.mutedText(context), height: 1.35),
+          ),
+          const SizedBox(height: 16),
+          if (items.isEmpty)
+            Text(
+              'Todavía no hay eventos concluidos para este cultivo.',
+              style: TextStyle(color: AppColors.mutedText(context)),
+            )
+          else
+            ...items.map(_historyItem),
+        ],
+      ),
+    );
+  }
+
+  Widget _historyItem(AgriculturalCalendarItem item) {
+    final isManual = item.event.userCompleted;
+    final color = isManual
+        ? const Color(0xFF0D5D33)
+        : AppColors.mutedText(context);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.subtleBackground(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: color.withValues(alpha: 0.14),
+            child: Icon(
+              isManual ? Icons.task_alt : Icons.event_available_outlined,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.event.task,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${isManual ? 'Marcado manualmente' : 'Concluido por fecha'} • ${item.event.date}',
+                  style: TextStyle(color: color, fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  item.event.description,
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

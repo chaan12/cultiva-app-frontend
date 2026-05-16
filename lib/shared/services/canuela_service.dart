@@ -6,7 +6,6 @@ import '../../core/config/app_config.dart';
 import '../models/canuela_forecast.dart';
 
 class CanuelaService {
-  static const String sourceName = 'Lectura tradicional';
   static const String _archivePath = '/v1/archive';
 
   Future<CanuelaReport> fetchCanuelas({
@@ -144,7 +143,6 @@ class CanuelaService {
       year: selectedYear,
       generatedAt: DateTime.now(),
       months: months,
-      sourceName: sourceName,
     );
   }
 

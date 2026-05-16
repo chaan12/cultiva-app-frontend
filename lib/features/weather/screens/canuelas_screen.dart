@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/canuela_forecast.dart';
 import '../../../shared/services/canuela_service.dart';
 import '../../../shared/state/app_scope.dart';
@@ -61,10 +63,13 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F1E6),
-      body: SafeArea(
-        child: FutureBuilder<CanuelaReport>(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.screenBackground(context),
+        body: FutureBuilder<CanuelaReport>(
           future: _future,
           builder: (context, snapshot) {
             return RefreshIndicator(
@@ -87,8 +92,10 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
   }
 
   Widget _buildHeader(CanuelaReport? report) {
+    final topPadding = MediaQuery.paddingOf(context).top;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+      padding: EdgeInsets.fromLTRB(20, topPadding, 20, 28),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF174C35), Color(0xFF337C55), Color(0xFFD69A2D)],
@@ -106,37 +113,6 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 tooltip: 'Regresar',
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.white24),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.auto_awesome,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      report?.sourceName ?? CanuelaService.sourceName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -193,14 +169,18 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
         const SizedBox(height: 20),
         _YearSignalMap(report: report),
         const SizedBox(height: 20),
-        const Text(
+        Text(
           'Detalle por mes',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
+          style: TextStyle(
+            color: AppColors.primaryText(context),
+            fontWeight: FontWeight.w800,
+            fontSize: 20,
+          ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Una lectura sencilla de cómo podría verse cada mes.',
-          style: TextStyle(color: Colors.black54, height: 1.35),
+          style: TextStyle(color: AppColors.mutedText(context), height: 1.35),
         ),
         const SizedBox(height: 12),
         ...report.months.map(
@@ -233,12 +213,14 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE4DAC3)),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.22 : 0.05,
+            ),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -253,12 +235,12 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF5DF),
+                  color: AppColors.greenIconBackground(context),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.calendar_month,
-                  color: Color(0xFF246B45),
+                  color: AppColors.greenText(context),
                 ),
               ),
               const SizedBox(width: 12),
@@ -266,16 +248,17 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Señales del año',
                       style: TextStyle(
+                        color: AppColors.primaryText(context),
                         fontWeight: FontWeight.w800,
                         fontSize: 17,
                       ),
                     ),
                     Text(
                       'Basado en el 1 al 12 de enero de ${report.year}.',
-                      style: const TextStyle(color: Colors.black54),
+                      style: TextStyle(color: AppColors.mutedText(context)),
                     ),
                   ],
                 ),
@@ -286,8 +269,8 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
           if (wettest != null || driest != null) ...[
             Text(
               _summarySentence(wettest: wettest, driest: driest),
-              style: const TextStyle(
-                color: Color(0xFF3F392D),
+              style: TextStyle(
+                color: AppColors.primaryText(context),
                 height: 1.35,
                 fontWeight: FontWeight.w600,
               ),
@@ -431,7 +414,7 @@ class _SummaryMetric extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.black54, fontSize: 12),
+            style: TextStyle(color: AppColors.mutedText(context), fontSize: 12),
           ),
         ],
       ),
@@ -456,27 +439,34 @@ class _YearSignalMap extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE4DAC3)),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.grid_view_rounded, color: Color(0xFF246B45)),
-              SizedBox(width: 8),
+              Icon(
+                Icons.grid_view_rounded,
+                color: AppColors.greenText(context),
+              ),
+              const SizedBox(width: 8),
               Text(
                 'Mapa del año',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                style: TextStyle(
+                  color: AppColors.primaryText(context),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Cada cuadro resume si el mes se ve con poca o mucha lluvia.',
-            style: TextStyle(color: Colors.black54, height: 1.35),
+            style: TextStyle(color: AppColors.mutedText(context), height: 1.35),
           ),
           const SizedBox(height: 16),
           LayoutBuilder(
@@ -554,7 +544,11 @@ class _MonthSignalTile extends StatelessWidget {
             _rainPlainLabel(month.precipitationMm),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5),
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontWeight: FontWeight.w800,
+              fontSize: 10.5,
+            ),
           ),
           const SizedBox(height: 8),
           ClipRRect(
@@ -562,7 +556,9 @@ class _MonthSignalTile extends StatelessWidget {
             child: LinearProgressIndicator(
               value: intensity,
               minHeight: 6,
-              backgroundColor: Colors.white.withValues(alpha: 0.75),
+              backgroundColor: AppColors.cardBackground(
+                context,
+              ).withValues(alpha: 0.75),
               color: color,
             ),
           ),
@@ -643,9 +639,9 @@ class _MonthCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2D7BF)),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,14 +668,15 @@ class _MonthCard extends StatelessWidget {
                   children: [
                     Text(
                       month.monthName,
-                      style: const TextStyle(
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
                         fontWeight: FontWeight.w800,
                         fontSize: 18,
                       ),
                     ),
                     Text(
                       'Lectura tomada del $sourceDate',
-                      style: const TextStyle(color: Colors.black54),
+                      style: TextStyle(color: AppColors.mutedText(context)),
                     ),
                   ],
                 ),
@@ -747,8 +744,8 @@ class _MonthCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     month.cropHint,
-                    style: const TextStyle(
-                      color: Color(0xFF3F392D),
+                    style: TextStyle(
+                      color: AppColors.primaryText(context),
                       height: 1.35,
                       fontWeight: FontWeight.w600,
                     ),
@@ -785,8 +782,8 @@ class _RainIntensityBar extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.black54,
+              style: TextStyle(
+                color: AppColors.mutedText(context),
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -809,7 +806,7 @@ class _RainIntensityBar extends StatelessWidget {
             value: value,
             minHeight: 10,
             color: color,
-            backgroundColor: const Color(0xFFEFE8D8),
+            backgroundColor: AppColors.border(context),
           ),
         ),
       ],
@@ -833,17 +830,21 @@ class _MiniMetric extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: Colors.black45, size: 18),
+        Icon(icon, color: AppColors.mutedText(context), size: 18),
         const SizedBox(height: 4),
         Text(
           value,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+          style: TextStyle(
+            color: AppColors.primaryText(context),
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+          ),
         ),
         Text(
           label,
-          style: const TextStyle(color: Colors.black54, fontSize: 11),
+          style: TextStyle(color: AppColors.mutedText(context), fontSize: 11),
         ),
       ],
     );
@@ -861,9 +862,9 @@ class _ErrorState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2D7BF)),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -873,7 +874,11 @@ class _ErrorState extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w700, height: 1.35),
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 16),
           FilledButton.icon(

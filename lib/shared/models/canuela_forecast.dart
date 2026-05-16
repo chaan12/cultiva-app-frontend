@@ -4,14 +4,12 @@ class CanuelaReport {
     required this.year,
     required this.generatedAt,
     required this.months,
-    required this.sourceName,
   });
 
   final String locationLabel;
   final int year;
   final DateTime generatedAt;
   final List<CanuelaMonthForecast> months;
-  final String sourceName;
 
   double get averageTemperatureC {
     if (months.isEmpty) {

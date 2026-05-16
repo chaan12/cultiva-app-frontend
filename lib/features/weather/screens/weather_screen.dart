@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import 'canuelas_screen.dart';
 import '../../../shared/models/weather_snapshot.dart';
+import '../../../shared/services/agricultural_advisory_service.dart';
 import '../../../shared/state/app_scope.dart';
 
 class ClimaScreen extends StatefulWidget {
@@ -62,6 +63,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
                       hasWifiConnection: store.hasWifiConnection,
                       isShowingCachedWeather: store.isShowingCachedWeather,
                     ),
+                    const SizedBox(height: 20),
+                    _buildCropWeatherImpactCard(weather),
                     const SizedBox(height: 20),
                     _buildCanuelasEntryCard(),
                     const SizedBox(height: 20),
@@ -185,6 +188,99 @@ class _ClimaScreenState extends State<ClimaScreen> {
               foregroundColor: Colors.white,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCropWeatherImpactCard(WeatherSnapshot weather) {
+    final crops = AppScope.of(context).crops;
+    final advisories = AgriculturalAdvisoryService.weatherAdvisories(
+      crops: crops,
+      weather: weather,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground(context),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.agriculture_outlined,
+                color: AppColors.greenText(context),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Impacto en cultivos',
+                  style: TextStyle(
+                    color: AppColors.greenText(context),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            AgriculturalAdvisoryService.monthSignal(DateTime.now()),
+            style: TextStyle(color: AppColors.mutedText(context), height: 1.35),
+          ),
+          const SizedBox(height: 16),
+          ...advisories
+              .take(4)
+              .map(
+                (advisory) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: advisory.color.withValues(alpha: 0.14),
+                        child: Icon(advisory.icon, color: advisory.color),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              advisory.title,
+                              style: TextStyle(
+                                color: AppColors.primaryText(context),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              advisory.detail,
+                              style: TextStyle(
+                                color: AppColors.mutedText(context),
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
         ],
       ),
     );

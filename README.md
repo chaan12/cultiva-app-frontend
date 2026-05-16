@@ -194,19 +194,9 @@ Convertirnos en una de las principales plataformas tecnológicas agrícolas en M
 
 ---
 
-# 📷 Preview
-
-<p align="center">
-  <img src="./preview/dashboard.png" width="250"/>
-  <img src="./preview/crops.png" width="250"/>
-  <img src="./preview/weather.png" width="250"/>
-</p>
-
----
-
 # 📬 Contacto
 
-📧 contacto@cultivaplus.mx
+📧 chanxortiz@gmail.com
 
 🌐 próximamente...
 

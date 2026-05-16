@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../../core/routes/main_navigation.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/services/agricultural_advisory_service.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/state/app_store.dart';
+import '../../calendar/screens/agricultural_calendar_screen.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
 import '../../crop_details/screens/crop_details_screen.dart';
 import '../../crop_register/screens/crop_register_screen.dart';
+import '../../crop_tracking/screens/crop_tracking_screen.dart';
 import '../../crop_tracking/services/crop_tracking_service.dart';
 import '../widgets/dashboard_summary_card.dart';
 import 'next_milestone_screen.dart';
@@ -34,7 +37,11 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   _todayOverviewCard(context, store),
                   const SizedBox(height: 16),
+                  _priorityActionsCard(context, store),
+                  const SizedBox(height: 16),
                   _quickActionsCard(context),
+                  const SizedBox(height: 16),
+                  _climateAppliedCard(context, store),
                   const SizedBox(height: 16),
                   DashboardSummaryCard(
                     title: 'Temporada actual',
@@ -532,43 +539,234 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _quickActionsCard(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _quickAction(
-            context,
-            icon: Icons.add_circle_outline,
-            label: 'Registrar',
-            color: const Color(0xFF00A344),
-            onTap: () {
-              Navigator.push(
+        Row(
+          children: [
+            Expanded(
+              child: _quickAction(
                 context,
-                MaterialPageRoute(builder: (_) => const CropRegisterScreen()),
-              );
-            },
-          ),
+                icon: Icons.add_circle_outline,
+                label: 'Registrar',
+                color: const Color(0xFF00A344),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CropRegisterScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _quickAction(
+                context,
+                icon: Icons.calendar_month_outlined,
+                label: 'Calendario',
+                color: const Color(0xFF0D5D33),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AgriculturalCalendarScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _quickAction(
-            context,
-            icon: Icons.spa_outlined,
-            label: 'Catálogo',
-            color: AppColors.greenText(context),
-            onTap: () => MainNavigation.of(context)?.goToTab(2),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _quickAction(
-            context,
-            icon: Icons.cloud_outlined,
-            label: 'Clima',
-            color: const Color(0xFF1565C0),
-            onTap: () => MainNavigation.of(context)?.goToTab(3),
-          ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _quickAction(
+                context,
+                icon: Icons.spa_outlined,
+                label: 'Catálogo',
+                color: AppColors.greenText(context),
+                onTap: () => MainNavigation.of(context)?.goToTab(2),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _quickAction(
+                context,
+                icon: Icons.cloud_outlined,
+                label: 'Clima',
+                color: const Color(0xFF1565C0),
+                onTap: () => MainNavigation.of(context)?.goToTab(3),
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _priorityActionsCard(BuildContext context, AppStore store) {
+    final priorityItems = AgriculturalAdvisoryService.priorityItems(
+      store.crops,
+      daysAhead: 7,
+    );
+
+    return DashboardSummaryCard(
+      title: 'Acciones prioritarias',
+      subtitle: 'Qué atender primero esta semana',
+      icon: Icons.bolt_outlined,
+      child: priorityItems.isEmpty
+          ? Text(
+              'No hay eventos urgentes. Revisa calendario para planear las siguientes labores.',
+              style: TextStyle(color: AppColors.mutedText(context)),
+            )
+          : Column(
+              children: [
+                ...priorityItems
+                    .take(3)
+                    .map((item) => _priorityActionTile(context, item)),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AgriculturalCalendarScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    label: const Text('Abrir calendario agrícola'),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _priorityActionTile(
+    BuildContext context,
+    AgriculturalCalendarItem item,
+  ) {
+    final color = item.isOverdue
+        ? Colors.redAccent
+        : item.isToday
+        ? const Color(0xFFEF6C00)
+        : const Color(0xFFF59E0B);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CropTrackingScreen(crop: item.crop),
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: color.withValues(
+              alpha: AppColors.isDark(context) ? 0.12 : 0.08,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: color.withValues(alpha: 0.28)),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: color.withValues(alpha: 0.16),
+                child: Icon(item.event.icon, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.event.task,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${item.crop.name} • ${item.urgencyLabel}',
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: color),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _climateAppliedCard(BuildContext context, AppStore store) {
+    final advisories = AgriculturalAdvisoryService.weatherAdvisories(
+      crops: store.crops,
+      weather: store.weather,
+    );
+
+    return DashboardSummaryCard(
+      title: 'Clima aplicado al cultivo',
+      subtitle: AgriculturalAdvisoryService.monthSignal(DateTime.now()),
+      icon: Icons.cloud_sync_outlined,
+      child: Column(
+        children: advisories
+            .take(3)
+            .map(
+              (advisory) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: advisory.color.withValues(alpha: 0.14),
+                      child: Icon(advisory.icon, color: advisory.color),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            advisory.title,
+                            style: TextStyle(
+                              color: AppColors.primaryText(context),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            advisory.detail,
+                            style: TextStyle(
+                              color: AppColors.mutedText(context),
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 

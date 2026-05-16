@@ -59,6 +59,7 @@ class CropUpcomingEvent {
     required this.id,
     required this.task,
     required this.date,
+    required this.scheduledDate,
     required this.daysUntil,
     required this.priority,
     required this.icon,
@@ -71,6 +72,7 @@ class CropUpcomingEvent {
   final String id;
   final String task;
   final String date;
+  final DateTime scheduledDate;
   final int daysUntil;
   final String priority;
   final IconData icon;
@@ -104,6 +106,7 @@ class CropTrackingPlan {
     required this.progress,
     required this.daysToHarvest,
     required this.timelineStages,
+    required this.allEvents,
     required this.upcomingEvents,
     required this.summary,
   });
@@ -112,6 +115,7 @@ class CropTrackingPlan {
   final int progress;
   final int daysToHarvest;
   final List<CropTimelineStage> timelineStages;
+  final List<CropUpcomingEvent> allEvents;
   final List<CropUpcomingEvent> upcomingEvents;
   final CropTrackingSummary summary;
 }
