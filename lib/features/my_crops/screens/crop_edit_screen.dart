@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/models/crop_record.dart';
@@ -35,7 +36,9 @@ class _CropEditScreenState extends State<CropEditScreen> {
     super.initState();
     _areaController.text = widget.crop.areaHa.toString();
     _selectedDate = widget.crop.sowingDate;
-    _dateController.text = DateFormat('dd / MM / yyyy').format(widget.crop.sowingDate);
+    _dateController.text = DateFormat(
+      'dd / MM / yyyy',
+    ).format(widget.crop.sowingDate);
     _locationController.text = widget.crop.locationName;
   }
 
@@ -110,7 +113,7 @@ class _CropEditScreenState extends State<CropEditScreen> {
       return;
     }
     final area = double.parse(_areaController.text.trim().replaceAll(',', '.'));
-    
+
     final updatedCrop = widget.crop.copyWith(
       areaHa: area,
       sowingDate: _selectedDate!,
@@ -118,7 +121,7 @@ class _CropEditScreenState extends State<CropEditScreen> {
     );
 
     await AppScope.of(context).updateCrop(updatedCrop);
-    
+
     if (!mounted) {
       return;
     }
@@ -133,33 +136,38 @@ class _CropEditScreenState extends State<CropEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _showSuccess
-                      ? _buildSuccessView()
-                      : _buildForm(),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _showSuccess ? _buildSuccessView() : _buildForm(),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader() {
+    final topPadding = MediaQuery.paddingOf(context).top + 44;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
+      padding: EdgeInsets.fromLTRB(24, topPadding, 24, 30),
       decoration: const BoxDecoration(
         color: Color(0xFF0D5D33),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),

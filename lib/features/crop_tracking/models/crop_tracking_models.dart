@@ -56,6 +56,7 @@ class CropTimelineStage {
 
 class CropUpcomingEvent {
   const CropUpcomingEvent({
+    required this.id,
     required this.task,
     required this.date,
     required this.daysUntil,
@@ -64,8 +65,10 @@ class CropUpcomingEvent {
     required this.description,
     required this.required,
     required this.completed,
+    required this.userCompleted,
   });
 
+  final String id;
   final String task;
   final String date;
   final int daysUntil;
@@ -74,6 +77,7 @@ class CropUpcomingEvent {
   final String description;
   final bool required;
   final bool completed;
+  final bool userCompleted;
 }
 
 class CropTrackingSummary {

@@ -41,9 +41,14 @@ class CropTrackingService {
       orElse: () => timelineStages.last,
     );
 
-    final sortedEvents = profile.events.map((event) {
+    final sortedEvents = profile.events.asMap().entries.map((entry) {
+      final index = entry.key;
+      final event = entry.value;
       final day = (event.dayFraction * totalDays).round();
+      final id = _eventId(crop.cropId, index, day);
+      final userCompleted = crop.completedEventIds.contains(id);
       return CropUpcomingEvent(
+        id: id,
         task: event.task,
         date: _formatDate(crop.sowingDate.add(Duration(days: day))),
         daysUntil: day - elapsedDays,
@@ -51,7 +56,8 @@ class CropTrackingService {
         icon: event.icon,
         description: event.description,
         required: event.required,
-        completed: elapsedDays > day,
+        completed: elapsedDays > day || userCompleted,
+        userCompleted: userCompleted,
       );
     }).toList()..sort((a, b) => a.daysUntil.compareTo(b.daysUntil));
 
@@ -59,7 +65,13 @@ class CropTrackingService {
         .where((event) => event.daysUntil >= -1)
         .take(6)
         .toList();
-    final nextEvent = upcomingEvents.isNotEmpty ? upcomingEvents.first : null;
+    CropUpcomingEvent? nextEvent;
+    for (final event in upcomingEvents) {
+      if (!event.completed) {
+        nextEvent = event;
+        break;
+      }
+    }
     final daysToHarvest = math.max(totalDays - elapsedDays, 0);
 
     final summary = CropTrackingSummary(
@@ -99,6 +111,10 @@ class CropTrackingService {
     } catch (_) {
       return DateFormat('dd/MM/yyyy').format(date);
     }
+  }
+
+  static String _eventId(String cropId, int index, int day) {
+    return '$cropId-$index-$day';
   }
 
   static const Map<String, _CropProfile> _profiles = <String, _CropProfile>{

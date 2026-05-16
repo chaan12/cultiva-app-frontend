@@ -310,9 +310,11 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, AppStore store) {
+    final topPadding = MediaQuery.paddingOf(context).top + 30;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+      padding: EdgeInsets.fromLTRB(24, topPadding, 24, 40),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
+import '../../../shared/state/app_scope.dart';
+import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../models/crop_tracking_models.dart';
 import '../services/crop_tracking_service.dart';
 
@@ -33,41 +36,48 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
   Widget build(BuildContext context) {
     final plan = _plan;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(plan),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  _buildNotificationToggle(),
-                  const SizedBox(height: 20),
-                  _buildTabSelector(),
-                  const SizedBox(height: 20),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: activeTab == 'events'
-                        ? _buildEventsList(plan.upcomingEvents)
-                        : _buildTimeline(plan.timelineStages),
-                  ),
-                  const SizedBox(height: 40),
-                ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHeader(plan),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    _buildNotificationToggle(),
+                    const SizedBox(height: 20),
+                    _buildTabSelector(),
+                    const SizedBox(height: 20),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: activeTab == 'events'
+                          ? _buildEventsList(plan.upcomingEvents)
+                          : _buildTimeline(plan.timelineStages),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader(CropTrackingPlan plan) {
+    final topPadding = MediaQuery.paddingOf(context).top;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+      padding: EdgeInsets.fromLTRB(24, topPadding, 24, 40),
       decoration: const BoxDecoration(
         color: Color(0xFF0D5D33),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
@@ -294,17 +304,34 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
   }
 
   Widget _buildEventsList(List<CropUpcomingEvent> events) {
+    String? nextPendingEventId;
+    for (final event in events) {
+      if (!event.completed) {
+        nextPendingEventId = event.id;
+        break;
+      }
+    }
+
     return Column(
       key: const ValueKey('events_list'),
-      children: events.map(_eventCard).toList(),
+      children: events
+          .map(
+            (event) =>
+                _eventCard(event, canComplete: event.id == nextPendingEventId),
+          )
+          .toList(),
     );
   }
 
-  Widget _eventCard(CropUpcomingEvent event) {
+  Widget _eventCard(CropUpcomingEvent event, {required bool canComplete}) {
+    if (event.completed) {
+      return _completedEventCard(event);
+    }
+
     final priorityColor = event.priority == 'high'
         ? Colors.redAccent
         : Colors.amber[700]!;
-    return Container(
+    final card = Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.cardBackground(context),
@@ -360,9 +387,194 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
                 ],
               ),
             ),
+            if (canComplete) ...[
+              const SizedBox(width: 12),
+              Icon(
+                Icons.swipe_left_alt_rounded,
+                color: priorityColor.withValues(alpha: 0.7),
+              ),
+            ],
           ],
         ),
       ),
+    );
+
+    if (!canComplete) {
+      return card;
+    }
+
+    return Dismissible(
+      key: ValueKey('event-${event.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0D5D33),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        alignment: Alignment.centerRight,
+        child: const Icon(Icons.check_circle_outline, color: Colors.white),
+      ),
+      confirmDismiss: (_) async {
+        await _markEventCompleted(event);
+        return false;
+      },
+      child: card,
+    );
+  }
+
+  Widget _completedEventCard(CropUpcomingEvent event) {
+    final card = Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.subtleBackground(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.border(context),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.check_circle_outline,
+              color: AppColors.mutedText(context),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.task,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  event.userCompleted
+                      ? 'Concluido manualmente • ${event.date}'
+                      : 'Concluido por fecha • ${event.date}',
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (!event.userCompleted) {
+      return card;
+    }
+
+    return GestureDetector(
+      onLongPress: () => _showRestoreEventSheet(event),
+      child: card,
+    );
+  }
+
+  Future<void> _markEventCompleted(CropUpcomingEvent event) async {
+    final updatedCrop = await AppScope.of(
+      context,
+    ).markCropEventCompleted(_crop.id, event.id);
+    if (!mounted || updatedCrop == null) {
+      return;
+    }
+    setState(() => _crop = updatedCrop);
+    showCultivaSnackBar(
+      context,
+      message: 'Evento marcado como concluido.',
+      color: const Color(0xFF0D5D33),
+      icon: Icons.check_circle_outline,
+    );
+  }
+
+  void _showRestoreEventSheet(CropUpcomingEvent event) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.cardBackground(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: AppColors.border(context),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  event.task,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Este evento está marcado como concluido.',
+                  style: TextStyle(color: AppColors.mutedText(context)),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _restoreEventPending(event);
+                    },
+                    icon: const Icon(Icons.undo_rounded),
+                    label: const Text('Volver a pendiente'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _restoreEventPending(CropUpcomingEvent event) async {
+    final updatedCrop = await AppScope.of(
+      context,
+    ).unmarkCropEventCompleted(_crop.id, event.id);
+    if (!mounted || updatedCrop == null) {
+      return;
+    }
+    setState(() => _crop = updatedCrop);
+    showCultivaSnackBar(
+      context,
+      message: 'Evento devuelto a pendiente.',
+      color: const Color(0xFF0D5D33),
+      icon: Icons.undo_rounded,
     );
   }
 

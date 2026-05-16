@@ -54,11 +54,12 @@ class MyCropsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 8),
                   if (store.crops.isEmpty)
                     _buildEmptyState(context)
                   else
                     ListView.separated(
+                      padding: EdgeInsets.zero,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: store.crops.length,
@@ -122,9 +123,11 @@ class MyCropsScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, AppStore store) {
+    final topPadding = MediaQuery.paddingOf(context).top + 30;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
+      padding: EdgeInsets.fromLTRB(24, topPadding, 24, 30),
       decoration: const BoxDecoration(
         color: Color(0xFF0D5D33),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),

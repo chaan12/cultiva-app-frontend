@@ -641,9 +641,11 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final topPadding = MediaQuery.paddingOf(context).top + 40;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+      padding: EdgeInsets.fromLTRB(24, topPadding, 24, 40),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF0D5D33), Color(0xFF1B5E20)],

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -170,41 +171,48 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  left: 24,
-                  right: 24,
-                  bottom: isLandscape ? 40 : 24,
-                ),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _showSuccess
-                      ? _buildSuccessView()
-                      : switch (_step) {
-                          1 => _buildSelectCrop(isLandscape),
-                          2 => _buildCropDetails(),
-                          _ => _buildConfirmStep(),
-                        },
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    left: 24,
+                    right: 24,
+                    bottom: isLandscape ? 40 : 24,
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _showSuccess
+                        ? _buildSuccessView()
+                        : switch (_step) {
+                            1 => _buildSelectCrop(isLandscape),
+                            2 => _buildCropDetails(),
+                            _ => _buildConfirmStep(),
+                          },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader() {
+    final topPadding = MediaQuery.paddingOf(context).top + 44;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
+      padding: EdgeInsets.fromLTRB(24, topPadding, 24, 30),
       decoration: const BoxDecoration(
         color: Color(0xFF0D5D33),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),

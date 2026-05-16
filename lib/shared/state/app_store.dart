@@ -207,6 +207,59 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<CropRecord?> markCropEventCompleted(
+    String cropId,
+    String eventId,
+  ) async {
+    await initialize();
+    CropRecord? crop;
+    for (final item in _crops) {
+      if (item.id == cropId) {
+        crop = item;
+        break;
+      }
+    }
+    if (crop == null) {
+      return null;
+    }
+
+    final completedEventIds = <String>{
+      ...crop.completedEventIds,
+      eventId,
+    }.toList();
+    final updatedCrop = crop.copyWith(completedEventIds: completedEventIds);
+    await _databaseService.saveCrop(updatedCrop);
+    _crops = await _databaseService.loadCrops();
+    notifyListeners();
+    return updatedCrop;
+  }
+
+  Future<CropRecord?> unmarkCropEventCompleted(
+    String cropId,
+    String eventId,
+  ) async {
+    await initialize();
+    CropRecord? crop;
+    for (final item in _crops) {
+      if (item.id == cropId) {
+        crop = item;
+        break;
+      }
+    }
+    if (crop == null) {
+      return null;
+    }
+
+    final completedEventIds = crop.completedEventIds
+        .where((id) => id != eventId)
+        .toList();
+    final updatedCrop = crop.copyWith(completedEventIds: completedEventIds);
+    await _databaseService.saveCrop(updatedCrop);
+    _crops = await _databaseService.loadCrops();
+    notifyListeners();
+    return updatedCrop;
+  }
+
   Future<void> completeCrop(String cropId) async {
     await initialize();
     CropRecord? crop;

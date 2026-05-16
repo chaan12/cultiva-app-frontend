@@ -28,6 +28,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
       body: RefreshIndicator(
         onRefresh: store.refreshWeather,
         child: ListView(
+          padding: EdgeInsets.zero,
           children: [
             _buildHeader(
               weather,
@@ -196,9 +197,11 @@ class _ClimaScreenState extends State<ClimaScreen> {
     required bool hasWifiConnection,
     required bool isShowingCachedWeather,
   }) {
+    final topPadding = MediaQuery.paddingOf(context).top + 30;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+      padding: EdgeInsets.fromLTRB(24, topPadding, 24, 40),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],

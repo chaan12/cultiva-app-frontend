@@ -17,7 +17,8 @@ class CropRecord {
     required this.createdAt,
     this.isCompleted = false,
     this.completedAt,
-  });
+    List<String>? completedEventIds,
+  }) : _completedEventIds = completedEventIds;
 
   factory CropRecord.fromMap(Map<String, Object?> map) {
     return CropRecord(
@@ -36,6 +37,9 @@ class CropRecord {
       completedAt: map['completedAt'] == null
           ? null
           : DateTime.parse(map['completedAt'] as String),
+      completedEventIds: (map['completedEventIds'] as List<dynamic>?)
+          ?.whereType<String>()
+          .toList(),
     );
   }
 
@@ -75,6 +79,9 @@ class CropRecord {
   final DateTime createdAt;
   final bool isCompleted;
   final DateTime? completedAt;
+  final List<String>? _completedEventIds;
+
+  List<String> get completedEventIds => _completedEventIds ?? const <String>[];
 
   Map<String, Object?> toMap() {
     return <String, Object?>{
@@ -91,6 +98,7 @@ class CropRecord {
       'createdAt': createdAt.toIso8601String(),
       'isCompleted': isCompleted,
       'completedAt': completedAt?.toIso8601String(),
+      'completedEventIds': completedEventIds,
     };
   }
 
@@ -108,6 +116,7 @@ class CropRecord {
     DateTime? createdAt,
     bool? isCompleted,
     DateTime? completedAt,
+    List<String>? completedEventIds,
     bool clearCompletedAt = false,
   }) {
     return CropRecord(
@@ -124,6 +133,7 @@ class CropRecord {
       createdAt: createdAt ?? this.createdAt,
       isCompleted: isCompleted ?? this.isCompleted,
       completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
+      completedEventIds: completedEventIds ?? this.completedEventIds,
     );
   }
 

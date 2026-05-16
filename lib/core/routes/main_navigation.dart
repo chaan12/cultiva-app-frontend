@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../theme/app_colors.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/my_crops/screens/my_crops_screen.dart';
 import '../../features/crops_catalog/screens/crops_catalog_screen.dart';
@@ -22,14 +24,6 @@ class MainNavigation extends StatefulWidget {
 class MainNavigationState extends State<MainNavigation> {
   int currentIndex = 0;
 
-  final List<Widget> pages = [
-    const DashboardScreen(),
-    const MyCropsScreen(),
-    const CatalogoScreen(),
-    const ClimaScreen(),
-    const ConfiguracionScreen(),
-  ];
-
   void goToTab(int index) {
     if (index == currentIndex) {
       return;
@@ -41,12 +35,28 @@ class MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: IndexedStack(index: currentIndex, children: pages),
+    final pages = [
+      const DashboardScreen(),
+      const MyCropsScreen(),
+      ColoredBox(
+        color: AppColors.screenBackground(context),
+        child: const SafeArea(child: CatalogoScreen()),
       ),
-      bottomNavigationBar: SafeArea(
-        child: CultivaBottomNav(currentIndex: currentIndex, onTap: goToTab),
+      const ClimaScreen(),
+      const ConfiguracionScreen(),
+    ];
+    final overlayStyle = currentIndex == 2
+        ? SystemUiOverlayStyle.dark
+        : SystemUiOverlayStyle.light;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle.copyWith(statusBarColor: Colors.transparent),
+      child: Scaffold(
+        backgroundColor: AppColors.screenBackground(context),
+        body: IndexedStack(index: currentIndex, children: pages),
+        bottomNavigationBar: SafeArea(
+          child: CultivaBottomNav(currentIndex: currentIndex, onTap: goToTab),
+        ),
       ),
     );
   }
