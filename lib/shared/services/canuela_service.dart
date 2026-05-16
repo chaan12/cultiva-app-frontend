@@ -1,7 +1,5 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
-
 import '../../core/config/app_config.dart';
 import '../models/canuela_forecast.dart';
 
@@ -107,6 +105,8 @@ class CanuelaService {
     }
 
     final months = <CanuelaMonthForecast>[];
+    final interpreter = _ClimateInterpreter();
+
     for (var index = 0; index < 12; index++) {
       final rain = _readAt(precipitation, index);
       final maxTemp = _readAt(maxTemps, index);
@@ -117,6 +117,16 @@ class CanuelaService {
         fallback: (maxTemp + minTemp) / 2,
       );
       final code = _readIntAt(weatherCodes, index);
+
+      // Interpretar clima tradicional
+      final analysis = interpreter.analyze(
+        rainMm: rain,
+        maxTemp: maxTemp,
+        minTemp: minTemp,
+        meanTemp: meanTemp,
+        code: code,
+      );
+
       months.add(
         CanuelaMonthForecast(
           monthIndex: index + 1,
@@ -127,13 +137,9 @@ class CanuelaService {
           meanTempC: meanTemp,
           precipitationMm: rain,
           weatherCode: code,
-          conditionLabel: _weatherDescription(code, rain),
-          rainSignal: _rainSignal(rain),
-          cropHint: _cropHint(
-            rainMm: rain,
-            maxTempC: maxTemp,
-            minTempC: minTemp,
-          ),
+          conditionLabel: analysis.condition,
+          rainSignal: analysis.rainSignal,
+          cropHint: analysis.cropHint,
         ),
       );
     }
@@ -147,6 +153,7 @@ class CanuelaService {
   }
 
   int _defaultCanuelaYear(DateTime now) {
+    // Si estamos antes o durante el 12 de enero, usamos el año pasado
     final januaryWindowClosed =
         now.month > 1 || (now.month == 1 && now.day > 12);
     return januaryWindowClosed ? now.year : now.year - 1;
@@ -161,126 +168,128 @@ class CanuelaService {
   }
 
   double _toDouble(Object? value) {
-    if (value is num) {
-      return value.toDouble();
-    }
-    if (value is String) {
-      return double.tryParse(value) ?? 0;
-    }
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0;
     return 0;
   }
 
   int _toInt(Object? value) {
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
     return 0;
   }
 
-  bool _isValidCoordinate(
-    double value, {
-    required double min,
-    required double max,
-  }) {
+  bool _isValidCoordinate(double value, {required double min, required double max}) {
     return value.isFinite && value >= min && value <= max;
   }
 
   String _monthName(int month) {
     const months = <int, String>{
-      1: 'Enero',
-      2: 'Febrero',
-      3: 'Marzo',
-      4: 'Abril',
-      5: 'Mayo',
-      6: 'Junio',
-      7: 'Julio',
-      8: 'Agosto',
-      9: 'Septiembre',
-      10: 'Octubre',
-      11: 'Noviembre',
-      12: 'Diciembre',
+      1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
+      7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre',
     };
     return months[month] ?? '';
   }
+}
 
-  String _rainSignal(double rainMm) {
-    if (rainMm >= 20) {
-      return 'Lluvias abundantes';
-    }
-    if (rainMm >= 8) {
-      return 'Lluvias frecuentes';
-    }
-    if (rainMm >= 1) {
-      return 'Lluvias aisladas';
-    }
-    return 'Poca lluvia';
-  }
-
-  String _weatherDescription(int code, double rainMm) {
-    if (rainMm >= 20) {
-      return 'Lluvia marcada';
-    }
-    if (rainMm >= 8) {
-      return 'Lluvioso';
-    }
-    switch (code) {
-      case 0:
-        return 'Despejado';
-      case 1:
-      case 2:
-      case 3:
-        return 'Variable';
-      case 45:
-      case 48:
-        return 'Neblina';
-      case 51:
-      case 53:
-      case 55:
-      case 61:
-      case 63:
-      case 65:
-      case 80:
-      case 81:
-      case 82:
-        return 'Lluvia';
-      case 95:
-      case 96:
-      case 99:
-        return 'Tormenta';
-      default:
-        return 'Sin señal fuerte';
-    }
-  }
-
-  String _cropHint({
+/// Intérprete de señales climáticas tradicionales
+class _ClimateInterpreter {
+  _Interpretation analyze({
     required double rainMm,
-    required double maxTempC,
-    required double minTempC,
+    required double maxTemp,
+    required double minTemp,
+    required double meanTemp,
+    required int code,
   }) {
-    if (rainMm >= 20) {
-      return 'Conviene preparar salidas de agua y revisar que el cultivo no se quede encharcado.';
+    // 1. Scoring de humedad y lluvia
+    double rainScore = rainMm * 0.5;
+    if (code >= 51) rainScore += 2; // Señal de lluvia en el código
+    if (code >= 95) rainScore += 3; // Tormentas
+
+    // 2. Scoring de calor/frío
+    bool isHot = maxTemp >= 30;
+    bool isExtremeHot = maxTemp >= 35;
+    bool isCool = minTemp <= 12;
+    bool isCold = minTemp <= 6;
+
+    // 3. Inferencia de ambiente (bochorno, seco, etc.)
+    bool isMuggy = meanTemp > 24 && rainScore > 1.5;
+    bool isDryHeat = isHot && rainScore < 0.5;
+    bool isRestless = code >= 1 && code <= 3 || code >= 95; // Tiempo revuelto/inestable
+
+    // 4. Determinar Señal de Agua
+    String rainSignal;
+    if (rainScore >= 8) {
+      rainSignal = 'Agua buena para la tierra';
+    } else if (rainScore >= 4) {
+      rainSignal = 'Lluvias que entran y salen';
+    } else if (rainScore >= 1) {
+      rainSignal = 'Señales de agua pasajera';
+    } else if (isRestless) {
+      rainSignal = 'Cielo movido, poca agua';
+    } else {
+      rainSignal = 'Poca señal de agua';
     }
-    if (rainMm <= 0.2 && maxTempC >= 34) {
-      return 'Puede ser un mes con poca lluvia y calor: planea riegos y protege el suelo del sol directo.';
+
+    // 5. Determinar Ambiente (Condition)
+    String condition;
+    if (isMuggy) {
+      condition = 'Ambiente con bochorno';
+    } else if (isDryHeat) {
+      condition = 'Calor dominante y seco';
+    } else if (isExtremeHot) {
+      condition = 'Días de mucho calor';
+    } else if (isCold) {
+      condition = 'Mes de mucho frío y aire';
+    } else if (isCool) {
+      condition = 'Se espera un ambiente fresco';
+    } else if (isRestless && rainScore < 2) {
+      condition = 'Tiempo revuelto y variable';
+    } else if (rainScore >= 5) {
+      condition = 'Días húmedos y con nubes';
+    } else {
+      condition = 'Tiempo estable y tranquilo';
     }
-    if (maxTempC >= 35) {
-      return 'Puede sentirse muy caluroso: cuida que las plantas no pasen sed en días fuertes.';
+
+    // 6. Generar Consejo (Crop Hint)
+    String hint;
+    if (rainScore >= 10) {
+      hint = 'Vienen lluvias fuertes: cuidado con los encharques y cuida que las raices no sufran por tanta humedad.';
+    } else if (rainScore >= 4) {
+      hint = 'Mes de buena humedad: aprovecha para sembrar lo que necesita agua, pero cuidado con la maleza creciente.';
+    } else if (isDryHeat || isExtremeHot) {
+      hint = 'Se esperan días con calor muy fuerte. Riega las plantas frecuentemente y vigila que no se marchiten.';
+    } else if (isCold || isCool) {
+      hint = 'Días frescos: cuida las plantas más débiles y aquellas que necesitan calor.';
+    } else if (isRestless) {
+      hint = 'El tiempo será muy variable, vigila el viento y otras señales meteorológicas.';
+    } else if (rainScore < 1) {
+      hint = 'Mes sin muchas lluvias: es buen tiempo para preparar la tierra y limpiar, pero no descuides el riego.';
+    } else {
+      hint = 'Se ve buen tiempo para el campo: mantén tus labores normales.';
     }
-    if (minTempC <= 8) {
-      return 'Puede sentirse fresco: protege plantas delicadas durante las mañanas frías.';
-    }
-    if (rainMm >= 8) {
-      return 'Puede haber buena lluvia: aprovecha para sembrar, pero vigila maleza y exceso de agua.';
-    }
-    return 'Se ve estable: mantén riegos normales y revisa el cultivo con frecuencia.';
+
+    return _Interpretation(
+      condition: condition,
+      rainSignal: rainSignal,
+      cropHint: hint,
+    );
   }
+}
+
+class _Interpretation {
+  const _Interpretation({
+    required this.condition,
+    required this.rainSignal,
+    required this.cropHint,
+  });
+
+  final String condition;
+  final String rainSignal;
+  final String cropHint;
 }
 
 class CanuelaException implements Exception {
   const CanuelaException(this.message);
-
   final String message;
 }
