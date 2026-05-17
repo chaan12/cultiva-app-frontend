@@ -9,12 +9,12 @@ import '../models/app_location.dart';
 import '../models/app_settings.dart';
 import '../models/crop_record.dart';
 import '../models/weather_snapshot.dart';
-import '../services/crop_recommendation_service.dart';
-import '../services/crop_record_service.dart';
-import '../services/local_database_service.dart';
-import '../services/location_settings_service.dart';
-import '../services/location_service.dart';
-import '../services/weather_service.dart';
+import '../services/crops/crop_recommendation_service.dart';
+import '../services/crops/crop_record_service.dart';
+import '../services/storage/local_database_service.dart';
+import '../services/location/location_settings_service.dart';
+import '../services/location/location_service.dart';
+import '../services/weather/weather_service.dart';
 
 class AppStore extends ChangeNotifier {
   AppStore({

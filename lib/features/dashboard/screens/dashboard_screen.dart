@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/routes/main_navigation.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/services/agricultural_advisory_service.dart';
+import '../../../shared/services/advisory/agricultural_advisory_service.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/state/app_store.dart';
 import '../../calendar/screens/agricultural_calendar_screen.dart';

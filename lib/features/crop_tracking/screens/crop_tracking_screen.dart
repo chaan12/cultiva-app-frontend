@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
-import '../../../shared/services/agricultural_advisory_service.dart';
+import '../../../shared/services/advisory/agricultural_advisory_service.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../models/crop_tracking_models.dart';

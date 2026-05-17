@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../../core/config/app_config.dart';
-import '../models/weather_snapshot.dart';
+import '../../../core/config/app_config.dart';
+import '../../models/weather_snapshot.dart';
 
 class WeatherService {
   static const List<_WeatherProviderConfig> _providers =

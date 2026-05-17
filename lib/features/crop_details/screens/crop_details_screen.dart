@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/services/pdf_download_service.dart';
+import '../../../shared/services/documents/pdf_download_service.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../../crop_register/screens/crop_register_screen.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';

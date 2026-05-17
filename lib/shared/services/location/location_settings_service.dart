@@ -1,6 +1,6 @@
-import '../models/app_location.dart';
-import '../models/app_settings.dart';
-import 'local_database_service.dart';
+import '../../models/app_location.dart';
+import '../../models/app_settings.dart';
+import '../storage/local_database_service.dart';
 import 'location_service.dart';
 
 class LocationSettingsService {

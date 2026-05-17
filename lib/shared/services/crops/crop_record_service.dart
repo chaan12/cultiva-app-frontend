@@ -1,5 +1,5 @@
-import '../models/crop_record.dart';
-import 'local_database_service.dart';
+import '../../models/crop_record.dart';
+import '../storage/local_database_service.dart';
 
 class CropRecordService {
   const CropRecordService(this._databaseService);

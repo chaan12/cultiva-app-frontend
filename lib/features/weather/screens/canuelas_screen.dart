@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/canuela_forecast.dart';
-import '../../../shared/services/canuela_service.dart';
+import '../../../shared/services/weather/canuela_service.dart';
 import '../../../shared/state/app_scope.dart';
 
 class CanuelasScreen extends StatefulWidget {
@@ -272,7 +272,7 @@ class _CanuelasScreenState extends State<CanuelasScreen> {
               style: TextStyle(
                 color: AppColors.primaryText(context),
                 height: 1.35,
-                fontWeight: FontWeight.w600
+                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 16),
@@ -414,10 +414,7 @@ class _SummaryMetric extends StatelessWidget {
             label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.black54,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: Colors.black54, fontSize: 12),
           ),
         ],
       ),
@@ -854,22 +851,6 @@ String _rainPlainLabel(double rainMm) {
   }
   if (rainMm >= 1) {
     return 'Lluvias aisladas';
-  }
-  return 'Poca lluvia';
-}
-
-String _monthMood(CanuelaMonthForecast month) {
-  if (month.precipitationMm >= 20) {
-    return 'Mes muy lluvioso';
-  }
-  if (month.precipitationMm >= 8) {
-    return 'Mes lluvioso';
-  }
-  if (month.precipitationMm >= 1) {
-    return 'Lluvias aisladas';
-  }
-  if (month.meanTempC >= 28) {
-    return 'Poca lluvia y calor';
   }
   return 'Poca lluvia';
 }

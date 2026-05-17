@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/app_location.dart';
-import '../../../shared/services/location_service.dart';
-import '../../../shared/services/location_options_service.dart';
+import '../../../shared/services/location/location_service.dart';
+import '../../../shared/services/location/location_options_service.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../widgets/settings_section_card.dart';

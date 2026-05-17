@@ -1,7 +1,7 @@
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
-import '../models/app_location.dart';
+import '../../models/app_location.dart';
 
 class LocationService {
   Future<AppLocation> getCurrentLocation() async {

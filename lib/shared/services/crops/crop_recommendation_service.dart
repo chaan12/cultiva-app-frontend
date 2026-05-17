@@ -1,5 +1,5 @@
-import '../../features/crops_catalog/models/crop_catalog_item.dart';
-import '../../features/crops_catalog/services/crop_catalog_service.dart';
+import '../../../features/crops_catalog/models/crop_catalog_item.dart';
+import '../../../features/crops_catalog/services/crop_catalog_service.dart';
 
 class CropRecommendationService {
   const CropRecommendationService._();

@@ -1,4 +1,4 @@
-import '../models/app_location.dart';
+import '../../models/app_location.dart';
 
 class LocationOptionsService {
   const LocationOptionsService._();

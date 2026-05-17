@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../core/config/app_config.dart';
-import '../models/canuela_forecast.dart';
+import '../../../core/config/app_config.dart';
+import '../../models/canuela_forecast.dart';
 
 class CanuelaService {
   static const String _archivePath = '/v1/archive';
@@ -179,14 +179,28 @@ class CanuelaService {
     return 0;
   }
 
-  bool _isValidCoordinate(double value, {required double min, required double max}) {
+  bool _isValidCoordinate(
+    double value, {
+    required double min,
+    required double max,
+  }) {
     return value.isFinite && value >= min && value <= max;
   }
 
   String _monthName(int month) {
     const months = <int, String>{
-      1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
-      7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre',
+      1: 'Enero',
+      2: 'Febrero',
+      3: 'Marzo',
+      4: 'Abril',
+      5: 'Mayo',
+      6: 'Junio',
+      7: 'Julio',
+      8: 'Agosto',
+      9: 'Septiembre',
+      10: 'Octubre',
+      11: 'Noviembre',
+      12: 'Diciembre',
     };
     return months[month] ?? '';
   }
@@ -215,7 +229,8 @@ class _ClimateInterpreter {
     // 3. Inferencia de ambiente (bochorno, seco, etc.)
     bool isMuggy = meanTemp > 24 && rainScore > 1.5;
     bool isDryHeat = isHot && rainScore < 0.5;
-    bool isRestless = code >= 1 && code <= 3 || code >= 95; // Tiempo revuelto/inestable
+    bool isRestless =
+        code >= 1 && code <= 3 || code >= 95; // Tiempo revuelto/inestable
 
     // 4. Determinar Señal de Agua
     String rainSignal;
@@ -254,17 +269,23 @@ class _ClimateInterpreter {
     // 6. Generar Consejo (Crop Hint)
     String hint;
     if (rainScore >= 10) {
-      hint = 'Vienen lluvias fuertes: cuidado con los encharques y cuida que las raices no sufran por tanta humedad.';
+      hint =
+          'Vienen lluvias fuertes: cuidado con los encharques y cuida que las raices no sufran por tanta humedad.';
     } else if (rainScore >= 4) {
-      hint = 'Mes de buena humedad: aprovecha para sembrar lo que necesita agua, pero cuidado con la maleza creciente.';
+      hint =
+          'Mes de buena humedad: aprovecha para sembrar lo que necesita agua, pero cuidado con la maleza creciente.';
     } else if (isDryHeat || isExtremeHot) {
-      hint = 'Se esperan días con calor muy fuerte. Riega las plantas frecuentemente y vigila que no se marchiten.';
+      hint =
+          'Se esperan días con calor muy fuerte. Riega las plantas frecuentemente y vigila que no se marchiten.';
     } else if (isCold || isCool) {
-      hint = 'Días frescos: cuida las plantas más débiles y aquellas que necesitan calor.';
+      hint =
+          'Días frescos: cuida las plantas más débiles y aquellas que necesitan calor.';
     } else if (isRestless) {
-      hint = 'El tiempo será muy variable, vigila el viento y otras señales meteorológicas.';
+      hint =
+          'El tiempo será muy variable, vigila el viento y otras señales meteorológicas.';
     } else if (rainScore < 1) {
-      hint = 'Mes sin muchas lluvias: es buen tiempo para preparar la tierra y limpiar, pero no descuides el riego.';
+      hint =
+          'Mes sin muchas lluvias: es buen tiempo para preparar la tierra y limpiar, pero no descuides el riego.';
     } else {
       hint = 'Se ve buen tiempo para el campo: mantén tus labores normales.';
     }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/services/agricultural_advisory_service.dart';
+import '../../../shared/services/advisory/agricultural_advisory_service.dart';
 import '../../../shared/state/app_scope.dart';
 
 class AgriculturalCalendarScreen extends StatefulWidget {

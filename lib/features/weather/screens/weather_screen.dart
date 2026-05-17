@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import 'canuelas_screen.dart';
 import '../../../shared/models/weather_snapshot.dart';
-import '../../../shared/services/agricultural_advisory_service.dart';
+import '../../../shared/services/advisory/agricultural_advisory_service.dart';
 import '../../../shared/state/app_scope.dart';
 
 class ClimaScreen extends StatefulWidget {
