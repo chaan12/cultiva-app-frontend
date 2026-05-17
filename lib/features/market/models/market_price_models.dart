@@ -12,6 +12,10 @@ class MarketCenter {
     required this.longitude,
     required this.type,
     required this.mainProducts,
+    this.address,
+    this.openingHours,
+    this.phoneNumbers = const <String>[],
+    this.accessNotes,
   });
 
   final String id;
@@ -22,6 +26,10 @@ class MarketCenter {
   final double longitude;
   final String type;
   final List<String> mainProducts;
+  final String? address;
+  final String? openingHours;
+  final List<String> phoneNumbers;
+  final String? accessNotes;
 
   double distanceKmFrom(double latitude, double longitude) {
     const earthRadiusKm = 6371.0;

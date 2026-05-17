@@ -52,6 +52,11 @@ class MarketPriceService {
       latitude: 20.9366,
       longitude: -89.6517,
       type: 'Central mayorista',
+      address: 'Zona sur de Mérida, Yucatán',
+      openingHours:
+          'Lun 7:00-16:00; Mar 8:00-17:00; Mié 7:00-18:00; Jue 8:00-18:00; Vie-Sáb 8:00-17:00; Dom 9:00-15:00',
+      phoneNumbers: const <String>['999 945 0605'],
+      accessNotes: 'Acceso recomendado por vialidades principales de Mérida.',
       mainProducts: <String>[
         'cítricos',
         'papaya',
@@ -68,6 +73,9 @@ class MarketPriceService {
       latitude: 20.3023,
       longitude: -89.4181,
       type: 'Centro mayorista',
+      address: 'Oxkutzcab, Yucatán',
+      openingHours: 'Por confirmar',
+      accessNotes: 'Ruta frecuente para cítricos y frutas del sur de Yucatán.',
       mainProducts: <String>[
         'limón',
         'naranja',
@@ -84,6 +92,9 @@ class MarketPriceService {
       latitude: 20.9671,
       longitude: -89.6237,
       type: 'Mercado regional',
+      address: 'Centro de Mérida, Yucatán',
+      openingHours: 'Lun-Dom 7:00-17:00',
+      accessNotes: 'Útil para ventas regionales y volumen moderado.',
       mainProducts: <String>[
         'maíz',
         'frijol',
@@ -100,6 +111,9 @@ class MarketPriceService {
       latitude: 20.3971,
       longitude: -89.5357,
       type: 'Mercado regional',
+      address: 'Ticul, Yucatán',
+      openingHours: 'Por confirmar',
+      accessNotes: 'Punto regional para productores del sur del estado.',
       mainProducts: <String>['cítricos', 'chile', 'maíz', 'hortalizas'],
     ),
     MarketCenter(
@@ -110,6 +124,10 @@ class MarketPriceService {
       latitude: 20.6896,
       longitude: -88.2022,
       type: 'Mercado regional',
+      address: 'Valladolid, Yucatán',
+      openingHours: 'Lun-Dom 5:00-17:00',
+      phoneNumbers: const <String>['985 124 7464'],
+      accessNotes: 'Opción cercana para productores del oriente de Yucatán.',
       mainProducts: <String>['maíz', 'frijol', 'papaya', 'sandía'],
     ),
     MarketCenter(
@@ -120,6 +138,10 @@ class MarketPriceService {
       latitude: 21.1619,
       longitude: -86.8515,
       type: 'Módulo de abasto',
+      address: 'Cancún, Quintana Roo',
+      openingHours: 'Abierto 24 horas',
+      phoneNumbers: const <String>['998 886 2080', '998 886 2180'],
+      accessNotes: 'Centro de demanda turística para frutas y hortalizas.',
       mainProducts: <String>['papaya', 'limón', 'tomate', 'chile', 'frutas'],
     ),
     MarketCenter(
@@ -130,6 +152,9 @@ class MarketPriceService {
       latitude: 18.5001,
       longitude: -88.2961,
       type: 'Mercado mayorista',
+      address: 'Chetumal, Quintana Roo',
+      openingHours: 'Lun-Dom 6:30-18:00',
+      accessNotes: 'Alternativa para el sur de Quintana Roo y zona fronteriza.',
       mainProducts: <String>['piña', 'papaya', 'limón', 'hortalizas'],
     ),
     MarketCenter(
@@ -140,6 +165,10 @@ class MarketPriceService {
       latitude: 19.8454,
       longitude: -90.5233,
       type: 'Mercado mayorista',
+      address: 'Campeche, Campeche',
+      openingHours: 'Lun-Dom 5:00-22:00',
+      phoneNumbers: const <String>['981 816 6313'],
+      accessNotes: 'Punto regional para la península occidental.',
       mainProducts: <String>['mango', 'papaya', 'sandía', 'maíz'],
     ),
     MarketCenter(
@@ -150,6 +179,10 @@ class MarketPriceService {
       latitude: 19.3732,
       longitude: -99.0914,
       type: 'Central nacional',
+      address: 'Iztapalapa, Ciudad de México',
+      openingHours: 'Abierto 24 horas',
+      phoneNumbers: const <String>['55 5694 2137'],
+      accessNotes: 'Central nacional con mayor exigencia logística.',
       mainProducts: <String>[
         'aguacate',
         'tomate',
@@ -166,6 +199,10 @@ class MarketPriceService {
       latitude: 20.6537,
       longitude: -103.3941,
       type: 'Central nacional',
+      address: 'Guadalajara, Jalisco',
+      openingHours: 'Lun-Dom 2:00-18:00',
+      phoneNumbers: const <String>['55 4256 0081', '33 1201 8576'],
+      accessNotes: 'Central nacional para occidente y rutas de alto volumen.',
       mainProducts: <String>['maíz', 'aguacate', 'tomate', 'frutas'],
     ),
   ];

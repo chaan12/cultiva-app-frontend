@@ -1433,94 +1433,563 @@ class _NearbyMarketsSection extends StatelessWidget {
           final distance = market.distanceKmFrom(userLatitude, userLongitude);
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground(context),
+            child: Material(
+              color: AppColors.cardBackground(context),
+              borderRadius: BorderRadius.circular(18),
+              child: InkWell(
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.border(context)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: AppColors.greenIconBackground(context),
-                      borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => _MarketCenterDetailScreen(market: market),
                     ),
-                    child: Icon(
-                      Icons.location_city_outlined,
-                      color: AppColors.greenText(context),
-                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.border(context)),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          market.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.primaryText(context),
-                            fontWeight: FontWeight.w800,
-                          ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: AppColors.greenIconBackground(context),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          '${market.city}, ${market.state} · ${market.type}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.mutedText(context),
-                            fontSize: 12,
-                          ),
+                        child: Icon(
+                          Icons.location_city_outlined,
+                          color: AppColors.greenText(context),
                         ),
-                        const SizedBox(height: 5),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 5,
-                          children: market.mainProducts.take(4).map((product) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              market.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: AppColors.primaryText(context),
+                                fontWeight: FontWeight.w800,
                               ),
-                              decoration: BoxDecoration(
-                                color: AppColors.greenIconBackground(context),
-                                borderRadius: BorderRadius.circular(999),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${market.city}, ${market.state} · ${market.type}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: AppColors.mutedText(context),
+                                fontSize: 12,
                               ),
-                              child: Text(
+                            ),
+                            const SizedBox(height: 5),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 5,
+                              children: market.mainProducts.take(4).map((
                                 product,
-                                style: TextStyle(
-                                  color: AppColors.greenText(context),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                              ) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.greenIconBackground(
+                                      context,
+                                    ),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    product,
+                                    style: TextStyle(
+                                      color: AppColors.greenText(context),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${distance.toStringAsFixed(0)} km',
+                            style: TextStyle(
+                              color: AppColors.greenText(context),
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Icon(
+                            Icons.chevron_right,
+                            color: AppColors.mutedText(context),
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '${distance.toStringAsFixed(0)} km',
-                    style: TextStyle(
-                      color: AppColors.greenText(context),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           );
         }),
       ],
     );
+  }
+}
+
+class _MarketCenterDetailScreen extends StatelessWidget {
+  const _MarketCenterDetailScreen({required this.market});
+
+  final MarketCenter market;
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = AppScope.of(context).settings;
+    final userLatitude = settings.latitude ?? 20.9674;
+    final userLongitude = settings.longitude ?? -89.5926;
+    final distance = market.distanceKmFrom(userLatitude, userLongitude);
+    final phones = market.phoneNumbers.isEmpty
+        ? const <String>['Por confirmar']
+        : market.phoneNumbers;
+
+    return Scaffold(
+      backgroundColor: AppColors.screenBackground(context),
+      appBar: AppBar(
+        backgroundColor: AppColors.screenBackground(context),
+        foregroundColor: AppColors.primaryText(context),
+        elevation: 0,
+        title: const Text('Detalle de central'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: AppColors.isDark(context)
+                    ? const <Color>[Color(0xFF102519), Color(0xFF123D27)]
+                    : const <Color>[Color(0xFF00572E), Color(0xFF00A344)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.location_city_outlined,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  market.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${market.city}, ${market.state} · ${market.type}',
+                  style: const TextStyle(color: Colors.white70, height: 1.3),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _HeroMetric(
+                        icon: Icons.route_outlined,
+                        label: 'Desde parcela',
+                        value: '${distance.toStringAsFixed(1)} km',
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _HeroMetric(
+                        icon: Icons.schedule_outlined,
+                        label: 'Horario',
+                        value: market.openingHours ?? 'Por confirmar',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () => _openMarketDirections(context, market),
+                  icon: const Icon(Icons.navigation_outlined),
+                  label: const Text('Ruta GPS'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _openMarketInMaps(context, market),
+                  icon: const Icon(Icons.map_outlined),
+                  label: const Text('Ver mapa'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _MarketDetailCard(
+            title: 'Información operativa',
+            children: [
+              _MarketInfoTile(
+                icon: Icons.schedule_outlined,
+                label: 'Horarios',
+                value: market.openingHours ?? 'Por confirmar con la central',
+              ),
+              _MarketInfoTile(
+                icon: Icons.call_outlined,
+                label: 'Teléfonos',
+                value: phones.join('\n'),
+                action: market.phoneNumbers.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Llamar',
+                        onPressed: () => _openPhoneNumber(
+                          context,
+                          market.phoneNumbers.first,
+                        ),
+                        icon: const Icon(Icons.call_outlined),
+                      ),
+              ),
+              _MarketInfoTile(
+                icon: Icons.location_on_outlined,
+                label: 'Ubicación',
+                value:
+                    market.address ??
+                    '${market.city}, ${market.state}\n${market.latitude.toStringAsFixed(4)}, ${market.longitude.toStringAsFixed(4)}',
+              ),
+              if (market.accessNotes != null)
+                _MarketInfoTile(
+                  icon: Icons.local_shipping_outlined,
+                  label: 'Acceso',
+                  value: market.accessNotes!,
+                ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _MapPreviewCard(market: market),
+          const SizedBox(height: 18),
+          _MarketDetailCard(
+            title: 'Cultivos que normalmente compran',
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: market.mainProducts.map((product) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.greenIconBackground(context),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      product,
+                      style: TextStyle(
+                        color: AppColors.greenText(context),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroMetric extends StatelessWidget {
+  const _HeroMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 86),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white, size: 19),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+              height: 1.15,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketDetailCard extends StatelessWidget {
+  const _MarketDetailCard({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground(context),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketInfoTile extends StatelessWidget {
+  const _MarketInfoTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.action,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.greenIconBackground(context),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(icon, color: AppColors.greenText(context), size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: AppColors.mutedText(context),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ?action,
+        ],
+      ),
+    );
+  }
+}
+
+class _MapPreviewCard extends StatelessWidget {
+  const _MapPreviewCard({required this.market});
+
+  final MarketCenter market;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.cardBackground(context),
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () => _openMarketInMaps(context, market),
+        child: Container(
+          height: 154,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.border(context)),
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.greenIconBackground(context),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _MapGridPainter(
+                    lineColor: AppColors.greenText(
+                      context,
+                    ).withValues(alpha: 0.16),
+                  ),
+                ),
+              ),
+              Center(
+                child: Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: AppColors.greenText(context),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 14,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.location_on,
+                    color: Colors.white,
+                    size: 31,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 12,
+                child: Text(
+                  '${market.latitude.toStringAsFixed(4)}, ${market.longitude.toStringAsFixed(4)}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MapGridPainter extends CustomPainter {
+  const _MapGridPainter({required this.lineColor});
+
+  final Color lineColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 1.2;
+    for (var x = 18.0; x < size.width; x += 32) {
+      canvas.drawLine(Offset(x, 0), Offset(x - 28, size.height), paint);
+    }
+    for (var y = 18.0; y < size.height; y += 30) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y + 22), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MapGridPainter oldDelegate) {
+    return oldDelegate.lineColor != lineColor;
   }
 }
 
@@ -1701,6 +2170,57 @@ Future<void> _openMarketInMaps(
   } on MissingPluginException {
     if (context.mounted) {
       _showMapError(context);
+    }
+  }
+}
+
+Future<void> _openMarketDirections(
+  BuildContext context,
+  MarketCenter market,
+) async {
+  final settings = AppScope.of(context).settings;
+  final origin = settings.latitude == null || settings.longitude == null
+      ? null
+      : '${settings.latitude},${settings.longitude}';
+  final queryParameters = <String, String>{
+    'api': '1',
+    'destination': '${market.latitude},${market.longitude}',
+    'travelmode': 'driving',
+  };
+  if (origin != null) {
+    queryParameters['origin'] = origin;
+  }
+  final uri = Uri.https('www.google.com', '/maps/dir/', queryParameters);
+  try {
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      _showMapError(context);
+    }
+  } on MissingPluginException {
+    if (context.mounted) {
+      _showMapError(context);
+    }
+  }
+}
+
+Future<void> _openPhoneNumber(BuildContext context, String phoneNumber) async {
+  final uri = Uri(scheme: 'tel', path: phoneNumber);
+  try {
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo iniciar la llamada.')),
+      );
+    }
+  } on MissingPluginException {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo iniciar la llamada. Reinicia la app después de instalar plugins.',
+          ),
+        ),
+      );
     }
   }
 }
