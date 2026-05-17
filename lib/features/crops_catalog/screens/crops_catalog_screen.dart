@@ -37,7 +37,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.screenBackground(context),
-      
+
       body: Column(
         children: [
           Padding(

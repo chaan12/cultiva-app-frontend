@@ -5,6 +5,7 @@ import '../../../shared/services/pdf_download_service.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../../crop_register/screens/crop_register_screen.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
+import '../../crops_catalog/screens/pest_control_screen.dart';
 import '../../crops_catalog/services/crop_catalog_service.dart';
 
 class CropDetailsScreen extends StatelessWidget {
@@ -180,38 +181,60 @@ class CropDetailsScreen extends StatelessWidget {
                     title: 'Sanidad del cultivo',
                     icon: Icons.bug_report_outlined,
                     accent: accent,
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: crop.pests.map((item) {
-                        final isDark = AppColors.isDark(context);
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: crop.pests.map((item) {
+                            final isDark = AppColors.isDark(context);
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF341D16)
+                                    : const Color(0xFFFFF1EC),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF7C2D12)
+                                      : const Color(0xFFFFD0BF),
+                                ),
+                              ),
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? const Color(0xFFFDBA74)
+                                      : const Color(0xFF9A3412),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      PestControlScreen(initialCropId: crop.id),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.health_and_safety_outlined),
+                            label: const Text('Ver recomendaciones de control'),
                           ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF341D16)
-                                : const Color(0xFFFFF1EC),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF7C2D12)
-                                  : const Color(0xFFFFD0BF),
-                            ),
-                          ),
-                          child: Text(
-                            item,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? const Color(0xFFFDBA74)
-                                  : const Color(0xFF9A3412),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 8),
