@@ -426,7 +426,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () => MainNavigation.of(context)?.goToTab(3),
+                onPressed: () => MainNavigation.of(context)?.goToTab(4),
                 child: const Text('Clima'),
               ),
             ],
@@ -594,10 +594,34 @@ class DashboardScreen extends StatelessWidget {
             Expanded(
               child: _quickAction(
                 context,
+                icon: Icons.storefront_outlined,
+                label: 'Mercado',
+                color: const Color(0xFFB36B00),
+                onTap: () => MainNavigation.of(context)?.goToTab(3),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _quickAction(
+                context,
                 icon: Icons.cloud_outlined,
                 label: 'Clima',
                 color: const Color.fromARGB(255, 90, 167, 255),
-                onTap: () => MainNavigation.of(context)?.goToTab(3),
+                onTap: () => MainNavigation.of(context)?.goToTab(4),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _quickAction(
+                context,
+                icon: Icons.settings_outlined,
+                label: 'Config',
+                color: AppColors.mutedText(context),
+                onTap: () => MainNavigation.of(context)?.goToTab(5),
               ),
             ),
           ],

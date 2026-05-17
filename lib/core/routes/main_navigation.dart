@@ -5,6 +5,7 @@ import '../theme/app_colors.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/my_crops/screens/my_crops_screen.dart';
 import '../../features/crops_catalog/screens/crops_catalog_screen.dart';
+import '../../features/market/screens/market_prices_screen.dart';
 import '../../features/weather/screens/weather_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 
@@ -42,6 +43,7 @@ class MainNavigationState extends State<MainNavigation> {
         color: AppColors.screenBackground(context),
         child: const SafeArea(child: CatalogoScreen()),
       ),
+      const MarketPricesScreen(),
       const ClimaScreen(),
       const ConfiguracionScreen(),
     ];

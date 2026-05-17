@@ -40,7 +40,7 @@ class _CultivaBottomNavState extends State<CultivaBottomNav> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 9),
           decoration: BoxDecoration(
             color: active ? activeBg : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
@@ -55,17 +55,17 @@ class _CultivaBottomNavState extends State<CultivaBottomNav> {
                   icon,
                   key: ValueKey(active),
                   color: active ? AppColors.greenPrimary : inactiveColor,
-                  size: 24,
+                  size: 23,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Text(
                 label,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                   color: active ? AppColors.greenPrimary : inactiveColor,
                 ),
@@ -98,14 +98,11 @@ class _CultivaBottomNavState extends State<CultivaBottomNav> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           navItem(icon: Icons.home_outlined, label: 'Inicio', index: 0),
-          navItem(
-            icon: Icons.list_alt_outlined,
-            label: 'Mis Cultivos',
-            index: 1,
-          ),
+          navItem(icon: Icons.list_alt_outlined, label: 'Cultivos', index: 1),
           navItem(icon: Icons.spa_outlined, label: 'Catálogo', index: 2),
-          navItem(icon: Icons.cloud_outlined, label: 'Clima', index: 3),
-          navItem(icon: Icons.settings_outlined, label: 'Config', index: 4),
+          navItem(icon: Icons.storefront_outlined, label: 'Mercado', index: 3),
+          navItem(icon: Icons.cloud_outlined, label: 'Clima', index: 4),
+          navItem(icon: Icons.settings_outlined, label: 'Config', index: 5),
         ],
       ),
     );
