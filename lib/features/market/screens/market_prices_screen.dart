@@ -22,6 +22,7 @@ class _MarketPricesScreenState extends State<MarketPricesScreen> {
   final MarketPriceService _service = const MarketPriceService();
   final TextEditingController _cropSearchController = TextEditingController();
   Future<MarketSnapshot>? _snapshotFuture;
+  String? _snapshotLocationKey;
   String? _selectedCrop;
   String _cropQuery = '';
   bool _showTon = false;
@@ -36,7 +37,20 @@ class _MarketPricesScreenState extends State<MarketPricesScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _snapshotFuture ??= _loadSnapshot();
+    final settings = AppScope.of(context).settings;
+    final locationKey = _locationKey(
+      settings.locationName,
+      settings.latitude,
+      settings.longitude,
+    );
+    if (_snapshotFuture == null || _snapshotLocationKey != locationKey) {
+      _snapshotLocationKey = locationKey;
+      _snapshotFuture = _loadSnapshot();
+    }
+  }
+
+  String _locationKey(String name, double? latitude, double? longitude) {
+    return '$name|${latitude?.toStringAsFixed(5)}|${longitude?.toStringAsFixed(5)}';
   }
 
   Future<MarketSnapshot> _loadSnapshot() {
@@ -50,7 +64,15 @@ class _MarketPricesScreenState extends State<MarketPricesScreen> {
 
   Future<void> _refresh() async {
     final future = _loadSnapshot();
-    setState(() => _snapshotFuture = future);
+    final settings = AppScope.of(context).settings;
+    setState(() {
+      _snapshotLocationKey = _locationKey(
+        settings.locationName,
+        settings.latitude,
+        settings.longitude,
+      );
+      _snapshotFuture = future;
+    });
     await future;
   }
 
@@ -59,6 +81,7 @@ class _MarketPricesScreenState extends State<MarketPricesScreen> {
     return Scaffold(
       backgroundColor: AppColors.screenBackground(context),
       body: FutureBuilder<MarketSnapshot>(
+        key: ValueKey(_snapshotLocationKey),
         future: _snapshotFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting &&
