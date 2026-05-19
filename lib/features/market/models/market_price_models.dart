@@ -16,6 +16,9 @@ class MarketCenter {
     this.openingHours,
     this.phoneNumbers = const <String>[],
     this.accessNotes,
+    this.description,
+    this.tags = const <String>[],
+    this.images = const <String>[],
   });
 
   final String id;
@@ -30,6 +33,47 @@ class MarketCenter {
   final String? openingHours;
   final List<String> phoneNumbers;
   final String? accessNotes;
+  final String? description;
+  final List<String> tags;
+  final List<String> images;
+
+  factory MarketCenter.fromJson(Map<String, dynamic> json) {
+    return MarketCenter(
+      id: json['id'] as String,
+      name: json['nombre'] as String,
+      state: json['estado'] as String,
+      city: json['ciudad'] as String,
+      latitude: (json['lat'] as num).toDouble(),
+      longitude: (json['lng'] as num).toDouble(),
+      type: json['tipo'] as String,
+      address: json['direccion'] as String?,
+      openingHours: json['horarios'] as String?,
+      phoneNumbers: _stringList(json['telefono']),
+      accessNotes: json['notas_acceso'] as String?,
+      mainProducts: _stringList(json['cultivos']),
+      description: json['descripcion'] as String?,
+      tags: _stringList(json['tags']),
+      images: _stringList(json['imagenes']),
+    );
+  }
+
+  static List<String> _stringList(Object? value) {
+    if (value == null) {
+      return const <String>[];
+    }
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? const <String>[] : <String>[trimmed];
+    }
+    if (value is List) {
+      return value
+          .whereType<String>()
+          .map((item) => item.trim())
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+    return const <String>[];
+  }
 
   double distanceKmFrom(double latitude, double longitude) {
     const earthRadiusKm = 6371.0;

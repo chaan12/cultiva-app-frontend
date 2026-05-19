@@ -39,6 +39,7 @@ flutter:
     - assets/icons/
     - assets/logos/
     - assets/pdfs/
+    - assets/data/
 
 flutter_launcher_icons:
   android: true

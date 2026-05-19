@@ -1449,7 +1449,7 @@ class _NearbyMarketsSection extends StatelessWidget {
         _SectionTitle(
           icon: Icons.map_outlined,
           title: 'Centrales cercanas',
-          subtitle: 'Opciones dentro de ${markets.first.state}',
+          subtitle: 'Opciones agrícolas ordenadas por distancia',
         ),
         const SizedBox(height: 12),
         ...markets.map((market) {
@@ -1589,6 +1589,9 @@ class _MarketCenterDetailScreen extends StatelessWidget {
     final phones = market.phoneNumbers.isEmpty
         ? const <String>['Por confirmar']
         : market.phoneNumbers;
+    final hasPublicPhone = market.phoneNumbers.any(
+      (phone) => !phone.toLowerCase().contains('no disponible'),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.screenBackground(context),
@@ -1688,6 +1691,49 @@ class _MarketCenterDetailScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
+          if (market.description != null) ...[
+            _MarketDetailCard(
+              title: 'Relevancia agrícola',
+              children: [
+                Text(
+                  market.description!,
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+                if (market.tags.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: market.tags.map((tag) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.greenIconBackground(context),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          tag,
+                          style: TextStyle(
+                            color: AppColors.greenText(context),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 18),
+          ],
           _MarketDetailCard(
             title: 'Información operativa',
             children: [
@@ -1700,7 +1746,7 @@ class _MarketCenterDetailScreen extends StatelessWidget {
                 icon: Icons.call_outlined,
                 label: 'Teléfonos',
                 value: phones.join('\n'),
-                action: market.phoneNumbers.isEmpty
+                action: !hasPublicPhone
                     ? null
                     : IconButton(
                         tooltip: 'Llamar',
