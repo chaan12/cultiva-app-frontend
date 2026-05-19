@@ -7,6 +7,16 @@
 .buildlog/
 .history
 
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p8
+*.p12
+*.mobileprovision
+secrets/
+
 
 
 # Flutter repo-specific

@@ -1,52 +1,64 @@
-import 'dart:convert';
-
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/app_settings.dart';
 import '../../models/crop_record.dart';
 import '../../models/weather_snapshot.dart';
+import '../../security/safe_json.dart';
 
 class LocalDatabaseService {
   static const _cropsKey = 'cultiva_crops';
   static const _settingsKey = 'cultiva_settings';
   static const _weatherKey = 'cultiva_weather';
+  static const _maxCropsJsonBytes = 512000;
+  static const _maxSettingsJsonBytes = 32000;
+  static const _maxWeatherJsonBytes = 768000;
+  static const _maxStoredCrops = 500;
 
   SharedPreferencesAsync? _preferences;
+  FlutterSecureStorage? _secureStorage;
 
   Future<void> init() async {
     if (_preferences != null) {
       return;
     }
     _preferences = SharedPreferencesAsync();
+    _secureStorage = const FlutterSecureStorage();
   }
 
   SharedPreferencesAsync get _prefs {
     final preferences = _preferences;
     if (preferences == null) {
-      throw StateError('Storage not initialized');
+      throw StateError('Almacenamiento no inicializado.');
     }
     return preferences;
   }
 
+  FlutterSecureStorage get _secure {
+    final storage = _secureStorage;
+    if (storage == null) {
+      throw StateError('Almacenamiento seguro no inicializado.');
+    }
+    return storage;
+  }
+
   Future<List<CropRecord>> loadCrops() async {
-    final raw = await _prefs.getString(_cropsKey);
+    final raw = await _readString(_cropsKey);
     if (raw == null || raw.isEmpty) {
       return <CropRecord>[];
     }
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! List<dynamic>) {
-        await _prefs.remove(_cropsKey);
-        return <CropRecord>[];
-      }
+      final decoded = SafeJson.list(raw, maxBytes: _maxCropsJsonBytes);
       final crops = decoded
-          .whereType<Map<String, dynamic>>()
-          .map(CropRecord.fromMap)
+          .take(_maxStoredCrops)
+          .whereType<Map>()
+          .map((item) => _tryReadCrop(item.cast<String, Object?>()))
+          .nonNulls
           .toList();
       crops.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return crops;
     } catch (_) {
-      await _prefs.remove(_cropsKey);
+      await _removeString(_cropsKey);
       return <CropRecord>[];
     }
   }
@@ -59,62 +71,98 @@ class LocalDatabaseService {
     } else {
       crops[index] = crop;
     }
-    await _prefs.setString(
+    await _writeString(
       _cropsKey,
-      jsonEncode(crops.map((item) => item.toMap()).toList()),
+      SafeJsonEncode.list(crops.map((item) => item.toMap()).toList()),
     );
   }
 
   Future<void> deleteCrop(String cropId) async {
     final crops = await loadCrops();
     crops.removeWhere((item) => item.id == cropId);
-    await _prefs.setString(
+    await _writeString(
       _cropsKey,
-      jsonEncode(crops.map((item) => item.toMap()).toList()),
+      SafeJsonEncode.list(crops.map((item) => item.toMap()).toList()),
     );
   }
 
   Future<AppSettings> loadSettings() async {
-    final raw = await _prefs.getString(_settingsKey);
+    final raw = await _readString(_settingsKey);
     if (raw == null || raw.isEmpty) {
       return AppSettings.defaults();
     }
     try {
-      final values = jsonDecode(raw);
-      if (values is! Map<String, dynamic>) {
-        await _prefs.remove(_settingsKey);
-        return AppSettings.defaults();
-      }
+      final values = SafeJson.object(raw, maxBytes: _maxSettingsJsonBytes);
       return AppSettings.fromMap(values);
     } catch (_) {
-      await _prefs.remove(_settingsKey);
+      await _removeString(_settingsKey);
       return AppSettings.defaults();
     }
   }
 
   Future<void> saveSettings(AppSettings settings) async {
-    await _prefs.setString(_settingsKey, jsonEncode(settings.toMap()));
+    await _writeString(_settingsKey, SafeJsonEncode.object(settings.toMap()));
   }
 
   Future<WeatherSnapshot?> loadWeather() async {
-    final raw = await _prefs.getString(_weatherKey);
+    final raw = await _readString(_weatherKey);
     if (raw == null || raw.isEmpty) {
       return null;
     }
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map<String, dynamic>) {
-        await _prefs.remove(_weatherKey);
-        return null;
-      }
+      final decoded = SafeJson.object(raw, maxBytes: _maxWeatherJsonBytes);
       return WeatherSnapshot.fromMap(decoded, isFromCache: true);
     } catch (_) {
-      await _prefs.remove(_weatherKey);
+      await _removeString(_weatherKey);
       return null;
     }
   }
 
   Future<void> saveWeather(WeatherSnapshot weather) async {
-    await _prefs.setString(_weatherKey, jsonEncode(weather.toMap()));
+    await _writeString(_weatherKey, SafeJsonEncode.object(weather.toMap()));
+  }
+
+  CropRecord? _tryReadCrop(Map<String, Object?> map) {
+    try {
+      return CropRecord.fromMap(map);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> _readString(String key) async {
+    try {
+      final secureValue = await _secure.read(key: key);
+      if (secureValue != null) {
+        return secureValue;
+      }
+      final legacyValue = await _prefs.getString(key);
+      if (legacyValue != null) {
+        await _writeString(key, legacyValue);
+        await _prefs.remove(key);
+      }
+      return legacyValue;
+    } catch (_) {
+      return _prefs.getString(key);
+    }
+  }
+
+  Future<void> _writeString(String key, String value) async {
+    try {
+      await _secure.write(key: key, value: value);
+      await _prefs.remove(key);
+    } catch (_) {
+      await _prefs.setString(key, value);
+    }
+  }
+
+  Future<void> _removeString(String key) async {
+    try {
+      await _secure.delete(key: key);
+    } catch (_) {
+      await _prefs.remove(key);
+      return;
+    }
+    await _prefs.remove(key);
   }
 }

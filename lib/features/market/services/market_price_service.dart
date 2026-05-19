@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
+import '../../../shared/security/safe_json.dart';
 import '../models/market_price_models.dart';
 
 class MarketPriceService {
@@ -50,12 +50,25 @@ class MarketPriceService {
     final rawJson = await rootBundle.loadString(
       'assets/data/market_centers.json',
     );
-    final decoded = jsonDecode(rawJson) as List<dynamic>;
+    final decoded = SafeJson.list(rawJson, maxBytes: 1024000);
     final markets = decoded
-        .map((item) => MarketCenter.fromJson(item as Map<String, dynamic>))
+        .whereType<Map>()
+        .map((item) => _tryReadMarket(item.cast<String, dynamic>()))
+        .nonNulls
         .toList(growable: false);
+    if (markets.isEmpty) {
+      throw const FormatException('No hay centrales disponibles.');
+    }
     _cachedMarkets = markets;
     return markets;
+  }
+
+  static MarketCenter? _tryReadMarket(Map<String, dynamic> item) {
+    try {
+      return MarketCenter.fromJson(item);
+    } catch (_) {
+      return null;
+    }
   }
 
   static List<CropMarketPrice> _buildReferencePrices(

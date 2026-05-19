@@ -1,3 +1,6 @@
+import '../security/input_sanitizer.dart';
+import '../security/safe_json.dart';
+
 class WeatherSnapshot {
   const WeatherSnapshot({
     required this.locationLabel,
@@ -30,17 +33,30 @@ class WeatherSnapshot {
   }) {
     DateTime readDateTime(Object? value) {
       if (value is String) {
-        return DateTime.parse(value);
+        final parsed = DateTime.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
       }
       throw const FormatException('Invalid weather timestamp');
     }
 
     return WeatherSnapshot(
-      locationLabel: map['locationLabel'] as String? ?? '',
-      primarySourceId: map['primarySourceId'] as String? ?? '',
-      primarySourceName: map['primarySourceName'] as String? ?? '',
+      locationLabel: InputSanitizer.location(
+        _readWeatherString(map['locationLabel']),
+      ),
+      primarySourceId: InputSanitizer.safeId(
+        _readWeatherString(map['primarySourceId']),
+      ),
+      primarySourceName: InputSanitizer.text(
+        _readWeatherString(map['primarySourceName']),
+        maxLength: 80,
+      ),
       temperatureC: _readWeatherDouble(map['temperatureC']),
-      description: map['description'] as String? ?? '',
+      description: InputSanitizer.text(
+        _readWeatherString(map['description']),
+        maxLength: 80,
+      ),
       humidity: _readWeatherInt(map['humidity']),
       windSpeedKmh: _readWeatherDouble(map['windSpeedKmh']),
       windGustKmh: _readWeatherDouble(map['windGustKmh']),
@@ -51,24 +67,32 @@ class WeatherSnapshot {
       cloudCover: _readWeatherInt(map['cloudCover']),
       pressureHpa: _readWeatherDouble(map['pressureHpa']),
       apparentTemperatureC: _readWeatherDouble(map['apparentTemperatureC']),
-      daily: (map['daily'] as List<dynamic>? ?? const <dynamic>[])
+      daily: SafeJson.listAt(map, 'daily')
+          .whereType<Map>()
           .map(
-            (item) => DailyWeatherPoint.fromMap(item as Map<String, dynamic>),
+            (item) => DailyWeatherPoint.fromMap(item.cast<String, dynamic>()),
           )
+          .take(16)
           .toList(),
-      hourly: (map['hourly'] as List<dynamic>? ?? const <dynamic>[])
+      hourly: SafeJson.listAt(map, 'hourly')
+          .whereType<Map>()
           .map(
-            (item) => HourlyWeatherPoint.fromMap(item as Map<String, dynamic>),
+            (item) => HourlyWeatherPoint.fromMap(item.cast<String, dynamic>()),
           )
+          .take(24)
           .toList(),
-      alerts: (map['alerts'] as List<dynamic>? ?? const <dynamic>[])
-          .map((item) => item.toString())
+      alerts: SafeJson.listAt(map, 'alerts')
+          .map((item) => InputSanitizer.text(item.toString(), maxLength: 160))
+          .where((item) => item.isNotEmpty)
+          .take(8)
           .toList(),
-      providers: (map['providers'] as List<dynamic>? ?? const <dynamic>[])
+      providers: SafeJson.listAt(map, 'providers')
+          .whereType<Map>()
           .map(
             (item) =>
-                WeatherProviderSnapshot.fromMap(item as Map<String, dynamic>),
+                WeatherProviderSnapshot.fromMap(item.cast<String, dynamic>()),
           )
+          .take(8)
           .toList(),
       updatedAt: readDateTime(map['updatedAt']),
       lastWifiSyncAt: _readNullableWeatherDateTime(map['lastWifiSyncAt']),
@@ -210,13 +234,20 @@ class DailyWeatherPoint {
   });
 
   factory DailyWeatherPoint.fromMap(Map<String, dynamic> map) {
+    final date = _readWeatherDateTime(map['date']);
     return DailyWeatherPoint(
-      label: map['label'] as String? ?? '',
-      date: DateTime.parse(map['date'] as String),
+      label: InputSanitizer.text(
+        _readWeatherString(map['label']),
+        maxLength: 16,
+      ),
+      date: date,
       minTempC: _readWeatherDouble(map['minTempC']),
       maxTempC: _readWeatherDouble(map['maxTempC']),
       rainProbability: _readWeatherInt(map['rainProbability']),
-      description: map['description'] as String? ?? '',
+      description: InputSanitizer.text(
+        _readWeatherString(map['description']),
+        maxLength: 80,
+      ),
     );
   }
 
@@ -253,9 +284,13 @@ class HourlyWeatherPoint {
   });
 
   factory HourlyWeatherPoint.fromMap(Map<String, dynamic> map) {
+    final time = _readWeatherDateTime(map['time']);
     return HourlyWeatherPoint(
-      label: map['label'] as String? ?? '',
-      time: DateTime.parse(map['time'] as String),
+      label: InputSanitizer.text(
+        _readWeatherString(map['label']),
+        maxLength: 16,
+      ),
+      time: time,
       temperatureC: _readWeatherDouble(map['temperatureC']),
       humidity: _readWeatherInt(map['humidity']),
       rainProbability: _readWeatherInt(map['rainProbability']),
@@ -304,16 +339,24 @@ class WeatherProviderSnapshot {
 
   factory WeatherProviderSnapshot.fromMap(Map<String, dynamic> map) {
     return WeatherProviderSnapshot(
-      id: map['id'] as String? ?? '',
-      name: map['name'] as String? ?? '',
-      description: map['description'] as String? ?? '',
+      id: InputSanitizer.safeId(_readWeatherString(map['id'])),
+      name: InputSanitizer.text(_readWeatherString(map['name']), maxLength: 80),
+      description: InputSanitizer.text(
+        _readWeatherString(map['description']),
+        maxLength: 160,
+      ),
       reliability: _readWeatherInt(map['reliability']),
       available: map['available'] as bool? ?? false,
-      data: (map['data'] as Map<String, dynamic>? ?? <String, dynamic>{}).map(
-        (key, value) => MapEntry(key, value.toString()),
-      ),
-      alerts: (map['alerts'] as List<dynamic>? ?? const <dynamic>[])
-          .map((item) => item.toString())
+      data: (SafeJson.mapAt(map, 'data') ?? <String, dynamic>{}).map(
+        (key, value) => MapEntry(
+          InputSanitizer.safeId(key, maxLength: 40),
+          InputSanitizer.text(value.toString(), maxLength: 80),
+        ),
+      )..removeWhere((key, value) => key.isEmpty),
+      alerts: SafeJson.listAt(map, 'alerts')
+          .map((item) => InputSanitizer.text(item.toString(), maxLength: 160))
+          .where((item) => item.isNotEmpty)
+          .take(8)
           .toList(),
     );
   }
@@ -341,10 +384,12 @@ class WeatherProviderSnapshot {
 
 double _readWeatherDouble(Object? value) {
   if (value is num) {
-    return value.toDouble();
+    final parsed = value.toDouble();
+    return parsed.isFinite ? parsed : 0;
   }
   if (value is String) {
-    return double.tryParse(value) ?? 0;
+    final parsed = double.tryParse(value);
+    return parsed != null && parsed.isFinite ? parsed : 0;
   }
   return 0;
 }
@@ -364,6 +409,20 @@ DateTime? _readNullableWeatherDateTime(Object? value) {
     return DateTime.tryParse(value);
   }
   return null;
+}
+
+DateTime _readWeatherDateTime(Object? value) {
+  if (value is String) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed != null) {
+      return parsed;
+    }
+  }
+  throw const FormatException('Invalid weather timestamp');
+}
+
+String _readWeatherString(Object? value) {
+  return value is String ? value : '';
 }
 
 DateTime _weatherDateOnly(DateTime value) {

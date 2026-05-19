@@ -130,6 +130,69 @@ La interfaz busca transmitir:
 
 ---
 
+# 🔐 Configuración de entorno
+
+Cultiva+ usa un sistema centralizado de variables de entorno para separar configuración, URLs, endpoints y futuras llaves privadas del código fuente.
+
+## Archivos
+
+- `.env.example`: plantilla versionada para desarrolladores.
+- `.env`: configuración local real. Este archivo está ignorado por Git y no debe compartirse.
+
+## Configuración local
+
+1. Copia la plantilla:
+
+```bash
+cp .env.example .env
+```
+
+2. Ajusta los valores de `.env` según el entorno local, staging o producción.
+
+3. Ejecuta la app normalmente:
+
+```bash
+flutter pub get
+flutter run
+```
+
+## Variables requeridas
+
+| Variable | Uso |
+|---|---|
+| `CULTIVA_ENV` | Entorno activo: `development`, `staging` o `production` |
+| `CULTIVA_WEATHER_API_HOST` | Host del proveedor meteorológico |
+| `CULTIVA_HISTORICAL_WEATHER_API_HOST` | Host del proveedor histórico |
+| `CULTIVA_HTTP_TIMEOUT_SECONDS` | Tiempo máximo de espera para peticiones HTTP |
+| `CULTIVA_WEATHER_ENDPOINT_NOAA_GFS` | Endpoint del modelo NOAA GFS |
+| `CULTIVA_WEATHER_ENDPOINT_ECMWF` | Endpoint del modelo ECMWF |
+| `CULTIVA_WEATHER_ENDPOINT_GEM` | Endpoint del modelo GEM |
+| `CULTIVA_WEATHER_ENDPOINT_METEOFRANCE` | Endpoint del modelo Meteo-France |
+| `CULTIVA_WEATHER_ENDPOINT_JMA` | Endpoint del modelo JMA |
+| `CULTIVA_CANUELA_ARCHIVE_PATH` | Endpoint histórico para cabañuelas |
+| `CULTIVA_MAPS_HOST` | Host externo para abrir mapas |
+| `CULTIVA_MAPS_SEARCH_PATH` | Ruta para búsqueda de mapas |
+| `CULTIVA_MAPS_DIRECTIONS_PATH` | Ruta para direcciones de mapas |
+
+## Variables opcionales
+
+| Variable | Uso |
+|---|---|
+| `CULTIVA_WEATHER_API_KEY` | Llave futura para proveedor meteorológico |
+| `CULTIVA_MAPS_API_KEY` | Llave futura para mapas |
+| `CULTIVA_ANALYTICS_KEY` | Llave futura para analítica |
+
+## Buenas prácticas
+
+- Nunca subas `.env` ni archivos con secretos reales.
+- Mantén `.env.example` sin credenciales reales.
+- No guardes secretos de backend de alto privilegio dentro de una app móvil; usa un backend/proxy seguro para credenciales que no deban llegar al dispositivo.
+- Para CI/CD, inyecta variables con `--dart-define` o genera `.env` desde el gestor seguro del proveedor.
+- No imprimas variables de entorno, tokens, llaves ni respuestas crudas de APIs en logs.
+- Usa `AppConfig` como única capa de lectura de configuración; no accedas a `dotenv` directamente desde widgets o servicios.
+
+---
+
 # 📱 Pantallas principales
 
 - 🏠 Dashboard

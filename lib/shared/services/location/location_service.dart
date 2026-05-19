@@ -2,6 +2,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../models/app_location.dart';
+import '../../security/input_sanitizer.dart';
 
 class LocationService {
   Future<AppLocation> getCurrentLocation() async {
@@ -44,7 +45,9 @@ class LocationService {
         placemark?.subAdministrativeArea,
       ]);
       final pieces = <String>[city, if (state != null && state != city) state];
-      label = pieces.isEmpty ? label : pieces.join(', ');
+      label = pieces.isEmpty
+          ? label
+          : InputSanitizer.location(pieces.join(', '));
     } catch (_) {
       label = 'Ubicación actual';
     }
@@ -57,8 +60,9 @@ class LocationService {
   }
 
   Future<AppLocation> geocode(String query) async {
-    final normalizedQuery = query.trim();
-    if (normalizedQuery.isEmpty) {
+    final normalizedQuery = InputSanitizer.location(query);
+    if (normalizedQuery.isEmpty ||
+        !InputSanitizer.isValidLocation(normalizedQuery)) {
       throw LocationException('Ingresa una ubicación válida.');
     }
 

@@ -1,9 +1,8 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/app_config.dart';
 import '../../models/weather_snapshot.dart';
+import '../../security/safe_json.dart';
 
 class WeatherService {
   static const List<_WeatherProviderConfig> _providers =
@@ -12,35 +11,30 @@ class WeatherService {
           id: 'noaa_gfs',
           name: 'NOAA GFS',
           description: 'Global Forecast System de NOAA',
-          endpointPath: '/v1/gfs',
           reliability: 95,
         ),
         _WeatherProviderConfig(
           id: 'ecmwf',
           name: 'ECMWF',
           description: 'Centro Europeo de Pronóstico de Mediano Plazo',
-          endpointPath: '/v1/ecmwf',
           reliability: 94,
         ),
         _WeatherProviderConfig(
           id: 'gem',
           name: 'GEM Canada',
           description: 'Modelo global del servicio meteorológico canadiense',
-          endpointPath: '/v1/gem',
           reliability: 90,
         ),
         _WeatherProviderConfig(
           id: 'meteofrance',
           name: 'Meteo-France',
           description: 'Modelo global de Meteo-France',
-          endpointPath: '/v1/meteofrance',
           reliability: 88,
         ),
         _WeatherProviderConfig(
           id: 'jma',
           name: 'JMA GSM',
           description: 'Modelo global de la Agencia Meteorológica de Japón',
-          endpointPath: '/v1/jma',
           reliability: 84,
         ),
       ];
@@ -130,33 +124,38 @@ class WeatherService {
     required double latitude,
     required double longitude,
   }) async {
-    final uri = Uri.https(AppConfig.weatherApiHost, provider.endpointPath, <
-      String,
-      String
-    >{
-      'latitude': latitude.toString(),
-      'longitude': longitude.toString(),
-      'timezone': 'auto',
-      'forecast_days': '16',
-      'current':
-          'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_gusts_10m,visibility,uv_index',
-      'hourly':
-          'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,uv_index,visibility,weather_code,cloud_cover,pressure_msl',
-      'daily':
-          'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
-    });
-
     try {
+      final queryParameters = <String, String>{
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+        'timezone': 'auto',
+        'forecast_days': '16',
+        'current':
+            'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_gusts_10m,visibility,uv_index',
+        'hourly':
+            'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,uv_index,visibility,weather_code,cloud_cover,pressure_msl',
+        'daily':
+            'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
+      };
+      final apiKey = AppConfig.weatherApiKey;
+      if (apiKey != null) {
+        queryParameters['apikey'] = apiKey;
+      }
+      final uri = Uri.https(
+        AppConfig.weatherApiHost,
+        AppConfig.weatherProviderEndpoint(provider.id),
+        queryParameters,
+      );
       final response = await http.get(uri).timeout(AppConfig.requestTimeout);
       if (response.statusCode != 200) {
         return _ProviderFetchResult(
           config: provider,
-          errorMessage: 'HTTP ${response.statusCode}',
+          errorMessage: 'No disponible',
         );
       }
 
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
+      final decoded = _decodeWeatherResponse(response.body);
+      if (decoded == null) {
         return _ProviderFetchResult(
           config: provider,
           errorMessage: 'Respuesta inválida',
@@ -166,7 +165,7 @@ class WeatherService {
       if ((json['error'] as bool?) ?? false) {
         return _ProviderFetchResult(
           config: provider,
-          errorMessage: (json['reason'] as String?) ?? 'Sin datos',
+          errorMessage: 'Sin cobertura para esta ubicación.',
         );
       }
       return _ProviderFetchResult(
@@ -182,39 +181,41 @@ class WeatherService {
   }
 
   _ProviderWeather _parseProviderWeather(Map<String, dynamic> json) {
-    final current =
-        json['current'] as Map<String, dynamic>? ?? <String, dynamic>{};
-    final daily = json['daily'] as Map<String, dynamic>? ?? <String, dynamic>{};
-    final hourly =
-        json['hourly'] as Map<String, dynamic>? ?? <String, dynamic>{};
+    final current = SafeJson.mapAt(json, 'current') ?? <String, dynamic>{};
+    final daily = SafeJson.mapAt(json, 'daily') ?? <String, dynamic>{};
+    final hourly = SafeJson.mapAt(json, 'hourly') ?? <String, dynamic>{};
 
-    final dailyTime = (daily['time'] as List<dynamic>? ?? const <dynamic>[])
-        .map((item) => item.toString())
-        .toList();
-    final dailyMin =
-        (daily['temperature_2m_min'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final dailyMax =
-        (daily['temperature_2m_max'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final dailyRain =
-        (daily['precipitation_probability_max'] as List<dynamic>? ??
-                const <dynamic>[])
-            .map(_toInt)
-            .toList();
-    final dailyCode =
-        (daily['weather_code'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toInt)
-            .toList();
+    final dailyTime = SafeJson.listAt(
+      daily,
+      'time',
+    ).map((item) => item.toString()).take(16).toList();
+    final dailyMin = SafeJson.listAt(
+      daily,
+      'temperature_2m_min',
+    ).map(_toDouble).take(16).toList();
+    final dailyMax = SafeJson.listAt(
+      daily,
+      'temperature_2m_max',
+    ).map(_toDouble).take(16).toList();
+    final dailyRain = SafeJson.listAt(
+      daily,
+      'precipitation_probability_max',
+    ).map(_toInt).take(16).toList();
+    final dailyCode = SafeJson.listAt(
+      daily,
+      'weather_code',
+    ).map(_toInt).take(16).toList();
 
     final dailyPoints = <DailyWeatherPoint>[];
     for (var index = 0; index < dailyTime.length; index++) {
+      final date = DateTime.tryParse(dailyTime[index]);
+      if (date == null) {
+        continue;
+      }
       dailyPoints.add(
         DailyWeatherPoint(
-          label: _weekdayLabel(DateTime.parse(dailyTime[index]).weekday),
-          date: DateTime.parse(dailyTime[index]),
+          label: _weekdayLabel(date.weekday),
+          date: date,
           minTempC: index < dailyMin.length ? dailyMin[index] : 0,
           maxTempC: index < dailyMax.length ? dailyMax[index] : 0,
           rainProbability: index < dailyRain.length ? dailyRain[index] : 0,
@@ -225,57 +226,55 @@ class WeatherService {
       );
     }
 
-    final hourlyTime = (hourly['time'] as List<dynamic>? ?? const <dynamic>[])
-        .map((item) => item.toString())
-        .toList();
-    final hourlyTemp =
-        (hourly['temperature_2m'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final hourlyHumidity =
-        (hourly['relative_humidity_2m'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toInt)
-            .toList();
-    final hourlyRainProbability =
-        (hourly['precipitation_probability'] as List<dynamic>? ??
-                const <dynamic>[])
-            .map(_toInt)
-            .toList();
-    final hourlyRain =
-        (hourly['precipitation'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final hourlyWind =
-        (hourly['wind_speed_10m'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final hourlyWindGustRaw =
-        hourly['wind_gusts_10m'] as List<dynamic>? ?? const <dynamic>[];
+    final hourlyTime = SafeJson.listAt(
+      hourly,
+      'time',
+    ).map((item) => item.toString()).take(48).toList();
+    final hourlyTemp = SafeJson.listAt(
+      hourly,
+      'temperature_2m',
+    ).map(_toDouble).take(48).toList();
+    final hourlyHumidity = SafeJson.listAt(
+      hourly,
+      'relative_humidity_2m',
+    ).map(_toInt).take(48).toList();
+    final hourlyRainProbability = SafeJson.listAt(
+      hourly,
+      'precipitation_probability',
+    ).map(_toInt).take(48).toList();
+    final hourlyRain = SafeJson.listAt(
+      hourly,
+      'precipitation',
+    ).map(_toDouble).take(48).toList();
+    final hourlyWind = SafeJson.listAt(
+      hourly,
+      'wind_speed_10m',
+    ).map(_toDouble).take(48).toList();
+    final hourlyWindGustRaw = SafeJson.listAt(hourly, 'wind_gusts_10m');
     final hourlyWindGust = hourlyWindGustRaw.map(_toDouble).toList();
-    final hourlyUvRaw =
-        hourly['uv_index'] as List<dynamic>? ?? const <dynamic>[];
+    final hourlyUvRaw = SafeJson.listAt(hourly, 'uv_index');
     final hourlyUv = hourlyUvRaw.map(_toDouble).toList();
-    final hourlyVisibilityRaw =
-        hourly['visibility'] as List<dynamic>? ?? const <dynamic>[];
+    final hourlyVisibilityRaw = SafeJson.listAt(hourly, 'visibility');
     final hourlyVisibility = hourlyVisibilityRaw
         .map((value) => _toDouble(value) / 1000)
+        .take(48)
         .toList();
-    final hourlyCode =
-        (hourly['weather_code'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toInt)
-            .toList();
-    final hourlyCloudCover =
-        (hourly['cloud_cover'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toInt)
-            .toList();
-    final hourlyPressure =
-        (hourly['pressure_msl'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final hourlyApparent =
-        (hourly['apparent_temperature'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
+    final hourlyCode = SafeJson.listAt(
+      hourly,
+      'weather_code',
+    ).map(_toInt).take(48).toList();
+    final hourlyCloudCover = SafeJson.listAt(
+      hourly,
+      'cloud_cover',
+    ).map(_toInt).take(48).toList();
+    final hourlyPressure = SafeJson.listAt(
+      hourly,
+      'pressure_msl',
+    ).map(_toDouble).take(48).toList();
+    final hourlyApparent = SafeJson.listAt(
+      hourly,
+      'apparent_temperature',
+    ).map(_toDouble).take(48).toList();
     final currentHourlyIndex = _nearestHourlyIndex(
       hourlyTime,
       currentTime: current['time']?.toString(),
@@ -283,7 +282,10 @@ class WeatherService {
 
     final hourlyPoints = <HourlyWeatherPoint>[];
     for (var index = 0; index < hourlyTime.length && index < 24; index++) {
-      final time = DateTime.parse(hourlyTime[index]);
+      final time = DateTime.tryParse(hourlyTime[index]);
+      if (time == null) {
+        continue;
+      }
       hourlyPoints.add(
         HourlyWeatherPoint(
           label: '${time.hour.toString().padLeft(2, '0')}:00',
@@ -450,7 +452,12 @@ class WeatherService {
 
   double _toDouble(Object? value) {
     if (value is num) {
-      return value.toDouble();
+      final parsed = value.toDouble();
+      return parsed.isFinite ? parsed : 0;
+    }
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      return parsed != null && parsed.isFinite ? parsed : 0;
     }
     return 0;
   }
@@ -460,6 +467,14 @@ class WeatherService {
       return value.toInt();
     }
     return 0;
+  }
+
+  Map<String, dynamic>? _decodeWeatherResponse(String body) {
+    try {
+      return SafeJson.object(body, maxBytes: 512000);
+    } catch (_) {
+      return null;
+    }
   }
 
   bool _isValidCoordinate(
@@ -589,14 +604,12 @@ class _WeatherProviderConfig {
     required this.id,
     required this.name,
     required this.description,
-    required this.endpointPath,
     required this.reliability,
   });
 
   final String id;
   final String name;
   final String description;
-  final String endpointPath;
   final int reliability;
 }
 

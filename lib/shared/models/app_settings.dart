@@ -1,3 +1,5 @@
+import '../security/input_sanitizer.dart';
+
 class AppSettings {
   const AppSettings({
     required this.weatherAlerts,
@@ -49,16 +51,15 @@ class AppSettings {
 
     double? readDouble(String key) {
       final value = map[key];
+      double? parsed;
       if (value is double) {
-        return value;
+        parsed = value;
+      } else if (value is int) {
+        parsed = value.toDouble();
+      } else if (value is String) {
+        parsed = double.tryParse(value);
       }
-      if (value is int) {
-        return value.toDouble();
-      }
-      if (value is String) {
-        return double.tryParse(value);
-      }
-      return null;
+      return parsed != null && parsed.isFinite ? parsed : null;
     }
 
     String readString(String key, String fallback) {
@@ -66,8 +67,20 @@ class AppSettings {
       if (value is! String) {
         return fallback;
       }
-      final trimmed = value.trim();
+      final trimmed = InputSanitizer.text(value, maxLength: 120);
       return trimmed.isEmpty ? fallback : trimmed;
+    }
+
+    double? readCoordinate(
+      String key, {
+      required double min,
+      required double max,
+    }) {
+      final value = readDouble(key);
+      if (value == null || value < min || value > max) {
+        return null;
+      }
+      return value;
     }
 
     return AppSettings(
@@ -82,8 +95,8 @@ class AppSettings {
       darkMode: readBool('darkMode', defaults.darkMode),
       autoLocation: readBool('autoLocation', defaults.autoLocation),
       locationName: readString('locationName', defaults.locationName),
-      latitude: readDouble('latitude'),
-      longitude: readDouble('longitude'),
+      latitude: readCoordinate('latitude', min: -90, max: 90),
+      longitude: readCoordinate('longitude', min: -180, max: 180),
     );
   }
 

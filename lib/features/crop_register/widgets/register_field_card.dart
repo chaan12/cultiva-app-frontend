@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 
@@ -14,6 +15,7 @@ class RegisterFieldCard extends StatelessWidget {
     this.errorText,
     this.readOnly = false,
     this.onTap,
+    this.inputFormatters,
   });
 
   final IconData icon;
@@ -25,6 +27,7 @@ class RegisterFieldCard extends StatelessWidget {
   final String? errorText;
   final bool readOnly;
   final VoidCallback? onTap;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +86,7 @@ class RegisterFieldCard extends StatelessWidget {
                     keyboardType: keyboardType,
                     readOnly: readOnly,
                     onTap: onTap,
+                    inputFormatters: inputFormatters,
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       suffixText: suffix,

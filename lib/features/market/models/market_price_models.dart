@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../shared/security/input_sanitizer.dart';
+
 class MarketCenter {
   const MarketCenter({
     required this.id,
@@ -38,20 +40,32 @@ class MarketCenter {
   final List<String> images;
 
   factory MarketCenter.fromJson(Map<String, dynamic> json) {
+    final id = InputSanitizer.safeId(_string(json['id']), maxLength: 80);
+    final latitude = _double(json['lat']);
+    final longitude = _double(json['lng']);
+    if (id.isEmpty ||
+        latitude == null ||
+        longitude == null ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180) {
+      throw const FormatException('Central de mercado inválida.');
+    }
     return MarketCenter(
-      id: json['id'] as String,
-      name: json['nombre'] as String,
-      state: json['estado'] as String,
-      city: json['ciudad'] as String,
-      latitude: (json['lat'] as num).toDouble(),
-      longitude: (json['lng'] as num).toDouble(),
-      type: json['tipo'] as String,
-      address: json['direccion'] as String?,
-      openingHours: json['horarios'] as String?,
+      id: id,
+      name: InputSanitizer.text(_string(json['nombre']), maxLength: 120),
+      state: InputSanitizer.text(_string(json['estado']), maxLength: 80),
+      city: InputSanitizer.text(_string(json['ciudad']), maxLength: 80),
+      latitude: latitude,
+      longitude: longitude,
+      type: InputSanitizer.text(_string(json['tipo']), maxLength: 80),
+      address: _optionalText(json['direccion'], maxLength: 180),
+      openingHours: _optionalText(json['horarios'], maxLength: 180),
       phoneNumbers: _stringList(json['telefono']),
-      accessNotes: json['notas_acceso'] as String?,
+      accessNotes: _optionalText(json['notas_acceso'], maxLength: 180),
       mainProducts: _stringList(json['cultivos']),
-      description: json['descripcion'] as String?,
+      description: _optionalText(json['descripcion'], maxLength: 320),
       tags: _stringList(json['tags']),
       images: _stringList(json['imagenes']),
     );
@@ -62,17 +76,40 @@ class MarketCenter {
       return const <String>[];
     }
     if (value is String) {
-      final trimmed = value.trim();
+      final trimmed = InputSanitizer.text(value, maxLength: 80);
       return trimmed.isEmpty ? const <String>[] : <String>[trimmed];
     }
     if (value is List) {
       return value
           .whereType<String>()
-          .map((item) => item.trim())
+          .map((item) => InputSanitizer.text(item, maxLength: 80))
           .where((item) => item.isNotEmpty)
+          .take(24)
           .toList();
     }
     return const <String>[];
+  }
+
+  static String _string(Object? value) {
+    return value is String ? value : '';
+  }
+
+  static double? _double(Object? value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      return double.tryParse(value);
+    }
+    return null;
+  }
+
+  static String? _optionalText(Object? value, {required int maxLength}) {
+    if (value is! String) {
+      return null;
+    }
+    final sanitized = InputSanitizer.text(value, maxLength: maxLength);
+    return sanitized.isEmpty ? null : sanitized;
   }
 
   double distanceKmFrom(double latitude, double longitude) {

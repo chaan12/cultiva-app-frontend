@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/app_location.dart';
+import '../../../shared/security/input_sanitizer.dart';
 import '../../../shared/services/location/location_service.dart';
 import '../../../shared/services/location/location_options_service.dart';
 import '../../../shared/state/app_scope.dart';
@@ -96,8 +98,17 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   }
 
   Future<void> _saveTypedLocation() {
-    final query = _locationController.text.trim();
+    final query = InputSanitizer.location(_locationController.text);
     if (query.isEmpty) {
+      showCultivaSnackBar(
+        context,
+        message: 'Escribe una ciudad o municipio válido.',
+        color: Colors.redAccent,
+        icon: Icons.warning_amber_rounded,
+      );
+      return Future<void>.value();
+    }
+    if (!InputSanitizer.isValidLocation(query)) {
       showCultivaSnackBar(
         context,
         message: 'Escribe una ciudad o municipio válido.',
@@ -437,6 +448,9 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                               TextField(
                                 controller: _locationController,
                                 enabled: !settings.autoLocation,
+                                inputFormatters: const <TextInputFormatter>[
+                                  SafeTextInputFormatter(maxLength: 120),
+                                ],
                                 textInputAction: TextInputAction.done,
                                 decoration: InputDecoration(
                                   filled: true,

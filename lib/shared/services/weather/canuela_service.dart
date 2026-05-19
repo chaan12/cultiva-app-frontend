@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../core/config/app_config.dart';
 import '../../models/canuela_forecast.dart';
+import '../../security/safe_json.dart';
 
 class CanuelaService {
-  static const String _archivePath = '/v1/archive';
-
   Future<CanuelaReport> fetchCanuelas({
     required double latitude,
     required double longitude,
@@ -19,38 +17,48 @@ class CanuelaService {
       );
     }
 
-    final selectedYear = year ?? _defaultCanuelaYear(DateTime.now());
+    final selectedYear = (year ?? _defaultCanuelaYear(DateTime.now())).clamp(
+      1940,
+      DateTime.now().year,
+    );
     final startDate = '$selectedYear-01-01';
     final endDate = '$selectedYear-01-12';
-    final uri = Uri.https(AppConfig.historicalWeatherApiHost, _archivePath, {
-      'latitude': latitude.toString(),
-      'longitude': longitude.toString(),
-      'start_date': startDate,
-      'end_date': endDate,
-      'timezone': 'auto',
-      'daily':
-          'weather_code,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum',
-    });
-
     try {
+      final queryParameters = <String, String>{
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+        'start_date': startDate,
+        'end_date': endDate,
+        'timezone': 'auto',
+        'daily':
+            'weather_code,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum',
+      };
+      final apiKey = AppConfig.weatherApiKey;
+      if (apiKey != null) {
+        queryParameters['apikey'] = apiKey;
+      }
+      final uri = Uri.https(
+        AppConfig.historicalWeatherApiHost,
+        AppConfig.canuelaArchivePath,
+        queryParameters,
+      );
       final response = await http.get(uri).timeout(AppConfig.requestTimeout);
       if (response.statusCode != 200) {
-        throw CanuelaException(
-          'La fuente histórica respondió con HTTP ${response.statusCode}.',
+        throw const CanuelaException(
+          'No fue posible consultar las cabañuelas en este momento.',
         );
       }
 
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
+      final decoded = _decodeCanuelaResponse(response.body);
+      if (decoded == null) {
         throw const CanuelaException(
           'La fuente histórica devolvió una respuesta inválida.',
         );
       }
       final json = decoded;
       if ((json['error'] as bool?) ?? false) {
-        throw CanuelaException(
-          (json['reason'] as String?) ??
-              'No fue posible consultar las cabañuelas.',
+        throw const CanuelaException(
+          'No fue posible consultar las cabañuelas en este momento.',
         );
       }
 
@@ -73,30 +81,31 @@ class CanuelaService {
     required String locationLabel,
     required int selectedYear,
   }) {
-    final daily = json['daily'] as Map<String, dynamic>? ?? <String, dynamic>{};
-    final dates = (daily['time'] as List<dynamic>? ?? const <dynamic>[])
-        .map((item) => item.toString())
-        .toList();
-    final maxTemps =
-        (daily['temperature_2m_max'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final minTemps =
-        (daily['temperature_2m_min'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final meanTemps =
-        (daily['temperature_2m_mean'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final precipitation =
-        (daily['precipitation_sum'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toDouble)
-            .toList();
-    final weatherCodes =
-        (daily['weather_code'] as List<dynamic>? ?? const <dynamic>[])
-            .map(_toInt)
-            .toList();
+    final daily = SafeJson.mapAt(json, 'daily') ?? <String, dynamic>{};
+    final dates = SafeJson.listAt(
+      daily,
+      'time',
+    ).map((item) => item.toString()).take(12).toList();
+    final maxTemps = SafeJson.listAt(
+      daily,
+      'temperature_2m_max',
+    ).map(_toDouble).take(12).toList();
+    final minTemps = SafeJson.listAt(
+      daily,
+      'temperature_2m_min',
+    ).map(_toDouble).take(12).toList();
+    final meanTemps = SafeJson.listAt(
+      daily,
+      'temperature_2m_mean',
+    ).map(_toDouble).take(12).toList();
+    final precipitation = SafeJson.listAt(
+      daily,
+      'precipitation_sum',
+    ).map(_toDouble).take(12).toList();
+    final weatherCodes = SafeJson.listAt(
+      daily,
+      'weather_code',
+    ).map(_toInt).take(12).toList();
 
     if (dates.length < 12) {
       throw const CanuelaException(
@@ -117,6 +126,12 @@ class CanuelaService {
         fallback: (maxTemp + minTemp) / 2,
       );
       final code = _readIntAt(weatherCodes, index);
+      final sourceDate = DateTime.tryParse(dates[index]);
+      if (sourceDate == null) {
+        throw const CanuelaException(
+          'La fuente histórica devolvió una respuesta inválida.',
+        );
+      }
 
       // Interpretar clima tradicional
       final analysis = interpreter.analyze(
@@ -131,7 +146,7 @@ class CanuelaService {
         CanuelaMonthForecast(
           monthIndex: index + 1,
           monthName: _monthName(index + 1),
-          sourceDate: DateTime.parse(dates[index]),
+          sourceDate: sourceDate,
           minTempC: minTemp,
           maxTempC: maxTemp,
           meanTempC: meanTemp,
@@ -168,8 +183,14 @@ class CanuelaService {
   }
 
   double _toDouble(Object? value) {
-    if (value is num) return value.toDouble();
-    if (value is String) return double.tryParse(value) ?? 0;
+    if (value is num) {
+      final parsed = value.toDouble();
+      return parsed.isFinite ? parsed : 0;
+    }
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      return parsed != null && parsed.isFinite ? parsed : 0;
+    }
     return 0;
   }
 
@@ -203,6 +224,14 @@ class CanuelaService {
       12: 'Diciembre',
     };
     return months[month] ?? '';
+  }
+
+  Map<String, dynamic>? _decodeCanuelaResponse(String body) {
+    try {
+      return SafeJson.object(body, maxBytes: 256000);
+    } catch (_) {
+      return null;
+    }
   }
 }
 

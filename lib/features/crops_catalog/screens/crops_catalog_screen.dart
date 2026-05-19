@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/security/input_sanitizer.dart';
 import '../../crop_details/screens/crop_details_screen.dart';
 import '../services/crop_catalog_service.dart';
 
@@ -66,7 +68,12 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                 ),
                 const SizedBox(height: 18),
                 TextField(
-                  onChanged: (value) => setState(() => _query = value),
+                  inputFormatters: const <TextInputFormatter>[
+                    SafeTextInputFormatter(maxLength: 80),
+                  ],
+                  onChanged: (value) {
+                    setState(() => _query = InputSanitizer.search(value));
+                  },
                   decoration: InputDecoration(
                     hintText: 'Buscar cultivo...',
                     prefixIcon: Icon(

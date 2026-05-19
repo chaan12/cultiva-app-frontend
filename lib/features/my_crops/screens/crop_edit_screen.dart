@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/models/crop_record.dart';
+import '../../../shared/security/input_sanitizer.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../../crop_register/widgets/register_field_card.dart';
@@ -70,8 +71,11 @@ class _CropEditScreenState extends State<CropEditScreen> {
 
   bool _validateFields() {
     final errors = <String, String>{};
-    final areaText = _areaController.text.trim().replaceAll(',', '.');
-    final area = double.tryParse(areaText);
+    final areaText = InputSanitizer.text(
+      _areaController.text,
+    ).replaceAll(',', '.');
+    final area = InputSanitizer.finiteDouble(areaText);
+    final location = InputSanitizer.location(_locationController.text);
 
     if (areaText.isEmpty) {
       errors['area'] = 'El área es obligatoria.';
@@ -88,8 +92,10 @@ class _CropEditScreenState extends State<CropEditScreen> {
         _selectedDate!.isAfter(_maxSowingDate)) {
       errors['fecha'] = 'La fecha de siembra está fuera del rango permitido.';
     }
-    if (_locationController.text.trim().isEmpty) {
+    if (location.isEmpty) {
       errors['ubicacion'] = 'La ubicación es obligatoria.';
+    } else if (!InputSanitizer.isValidLocation(location)) {
+      errors['ubicacion'] = 'Ingresa una ubicación válida.';
     }
 
     setState(() {
@@ -112,12 +118,13 @@ class _CropEditScreenState extends State<CropEditScreen> {
     if (!_validateFields() || _selectedDate == null) {
       return;
     }
-    final area = double.parse(_areaController.text.trim().replaceAll(',', '.'));
+    final area = InputSanitizer.finiteDouble(_areaController.text)!;
+    final location = InputSanitizer.location(_locationController.text);
 
     final updatedCrop = widget.crop.copyWith(
       areaHa: area,
       sowingDate: _selectedDate!,
-      locationName: _locationController.text.trim(),
+      locationName: location,
     );
 
     await AppScope.of(context).updateCrop(updatedCrop);
@@ -216,6 +223,9 @@ class _CropEditScreenState extends State<CropEditScreen> {
           subtitle: 'Superficie en hectáreas',
           controller: _areaController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: const <TextInputFormatter>[
+            DecimalTextInputFormatter(),
+          ],
           suffix: 'ha',
           errorText: _errors['area'],
         ),
@@ -237,6 +247,9 @@ class _CropEditScreenState extends State<CropEditScreen> {
           subtitle: 'Municipio o parcela',
           controller: _locationController,
           keyboardType: TextInputType.text,
+          inputFormatters: const <TextInputFormatter>[
+            SafeTextInputFormatter(maxLength: 120),
+          ],
           errorText: _errors['ubicacion'],
         ),
         const SizedBox(height: 40),

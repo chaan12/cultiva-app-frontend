@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../../features/crops_catalog/models/crop_catalog_item.dart';
+import '../security/input_sanitizer.dart';
 
 class CropRecord {
   CropRecord({
@@ -21,24 +22,44 @@ class CropRecord {
   }) : _completedEventIds = completedEventIds;
 
   factory CropRecord.fromMap(Map<String, Object?> map) {
+    final id = InputSanitizer.safeId(_readString(map, 'id'), maxLength: 96);
+    final cropId = InputSanitizer.safeId(
+      _readString(map, 'cropId'),
+      maxLength: 48,
+    );
+    final areaHa = _readDouble(map, 'areaHa');
+    final sowingDate = _readDate(map, 'sowingDate');
+    final createdAt = _readDate(map, 'createdAt');
+    final completedAtValue = map['completedAt'];
+    final imageAsset = _readString(map, 'imageAsset');
+    if (id.isEmpty ||
+        cropId.isEmpty ||
+        !areaHa.isFinite ||
+        areaHa <= 0 ||
+        !imageAsset.startsWith('assets/images/')) {
+      throw const FormatException('Registro de cultivo inválido.');
+    }
     return CropRecord(
-      id: map['id'] as String,
-      cropId: map['cropId'] as String,
-      name: map['name'] as String,
-      areaHa: ((map['areaHa'] as num?) ?? 0).toDouble(),
-      sowingDate: DateTime.parse(map['sowingDate'] as String),
-      locationName: map['locationName'] as String,
-      season: map['season'] as String,
-      cycleDays: (map['cycleDays'] as num).toInt(),
-      imageAsset: map['imageAsset'] as String,
-      accentColorValue: (map['accentColorValue'] as num).toInt(),
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      id: id,
+      cropId: cropId,
+      name: InputSanitizer.text(_readString(map, 'name'), maxLength: 80),
+      areaHa: areaHa,
+      sowingDate: sowingDate,
+      locationName: InputSanitizer.location(_readString(map, 'locationName')),
+      season: InputSanitizer.text(_readString(map, 'season'), maxLength: 80),
+      cycleDays: _readInt(map, 'cycleDays').clamp(1, 5000),
+      imageAsset: imageAsset,
+      accentColorValue: _readInt(map, 'accentColorValue'),
+      createdAt: createdAt,
       isCompleted: (map['isCompleted'] as bool?) ?? false,
-      completedAt: map['completedAt'] == null
+      completedAt: completedAtValue == null
           ? null
-          : DateTime.parse(map['completedAt'] as String),
+          : _readDate(map, 'completedAt'),
       completedEventIds: (map['completedEventIds'] as List<dynamic>?)
           ?.whereType<String>()
+          .map((id) => InputSanitizer.safeId(id, maxLength: 80))
+          .where((id) => id.isNotEmpty)
+          .take(200)
           .toList(),
     );
   }
@@ -222,5 +243,44 @@ class CropRecord {
   int _intervalCountdown(int interval) {
     final remainder = daysSinceSowing % interval;
     return remainder == 0 ? interval : interval - remainder;
+  }
+
+  static String _readString(Map<String, Object?> map, String key) {
+    final value = map[key];
+    return value is String ? value : '';
+  }
+
+  static double _readDouble(Map<String, Object?> map, String key) {
+    final value = map[key];
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      return double.tryParse(value) ?? double.nan;
+    }
+    return double.nan;
+  }
+
+  static int _readInt(Map<String, Object?> map, String key) {
+    final value = map[key];
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
+  }
+
+  static DateTime _readDate(Map<String, Object?> map, String key) {
+    final value = map[key];
+    if (value is! String) {
+      throw const FormatException('Fecha de cultivo inválida.');
+    }
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) {
+      throw const FormatException('Fecha de cultivo inválida.');
+    }
+    return parsed;
   }
 }

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
+import '../../../shared/security/input_sanitizer.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
@@ -95,8 +96,11 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
 
   bool _validateFields() {
     final errors = <String, String>{};
-    final areaText = _areaController.text.trim().replaceAll(',', '.');
-    final area = double.tryParse(areaText);
+    final areaText = InputSanitizer.text(
+      _areaController.text,
+    ).replaceAll(',', '.');
+    final area = InputSanitizer.finiteDouble(areaText);
+    final location = InputSanitizer.location(_locationController.text);
 
     if (_selectedCrop == null) {
       showCultivaSnackBar(
@@ -122,8 +126,10 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
         _selectedDate!.isAfter(_maxSowingDate)) {
       errors['fecha'] = 'La fecha de siembra está fuera del rango permitido.';
     }
-    if (_locationController.text.trim().isEmpty) {
+    if (location.isEmpty) {
       errors['ubicacion'] = 'La ubicación es obligatoria.';
+    } else if (!InputSanitizer.isValidLocation(location)) {
+      errors['ubicacion'] = 'Ingresa una ubicación válida.';
     }
 
     setState(() {
@@ -146,12 +152,13 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
     if (!_validateFields() || _selectedCrop == null || _selectedDate == null) {
       return;
     }
-    final area = double.parse(_areaController.text.trim().replaceAll(',', '.'));
+    final area = InputSanitizer.finiteDouble(_areaController.text)!;
+    final location = InputSanitizer.location(_locationController.text);
     final record = CropRecord.fromCatalog(
       item: _selectedCrop!,
       areaHa: area,
       sowingDate: _selectedDate!,
-      locationName: _locationController.text.trim(),
+      locationName: location,
     );
     await AppScope.of(context).addCrop(record);
     if (!mounted) {
@@ -288,7 +295,12 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
         const SizedBox(height: 18),
         TextField(
           controller: _cropSearchController,
-          onChanged: (value) => setState(() => _cropQuery = value),
+          inputFormatters: const <TextInputFormatter>[
+            SafeTextInputFormatter(maxLength: 80),
+          ],
+          onChanged: (value) {
+            setState(() => _cropQuery = InputSanitizer.search(value));
+          },
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             hintText: 'Buscar cultivo...',
@@ -458,6 +470,9 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
           subtitle: 'Superficie en hectáreas',
           controller: _areaController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: const <TextInputFormatter>[
+            DecimalTextInputFormatter(),
+          ],
           suffix: 'ha',
           errorText: _errors['area'],
         ),
@@ -479,6 +494,9 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
           subtitle: 'Municipio o parcela',
           controller: _locationController,
           keyboardType: TextInputType.text,
+          inputFormatters: const <TextInputFormatter>[
+            SafeTextInputFormatter(maxLength: 120),
+          ],
           errorText: _errors['ubicacion'],
         ),
         const SizedBox(height: 30),
@@ -570,7 +588,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
               _confirmRow(
                 Icons.map_outlined,
                 'Área',
-                '${_areaController.text} hectáreas',
+                '${InputSanitizer.text(_areaController.text)} hectáreas',
               ),
               _confirmRow(
                 Icons.calendar_today_outlined,
@@ -580,7 +598,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
               _confirmRow(
                 Icons.location_on_outlined,
                 'Ubicación',
-                _locationController.text,
+                InputSanitizer.location(_locationController.text),
               ),
               const SizedBox(height: 10),
               Container(

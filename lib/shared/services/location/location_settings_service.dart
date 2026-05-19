@@ -1,5 +1,6 @@
 import '../../models/app_location.dart';
 import '../../models/app_settings.dart';
+import '../../security/input_sanitizer.dart';
 import '../storage/local_database_service.dart';
 import 'location_service.dart';
 
@@ -29,8 +30,9 @@ class LocationSettingsService {
     AppSettings settings,
     String query,
   ) async {
-    final normalizedQuery = query.trim();
-    if (normalizedQuery.isEmpty) {
+    final normalizedQuery = InputSanitizer.location(query);
+    if (normalizedQuery.isEmpty ||
+        !InputSanitizer.isValidLocation(normalizedQuery)) {
       throw const LocationException('Ingresa una ubicación válida.');
     }
 
@@ -49,9 +51,13 @@ class LocationSettingsService {
     AppSettings settings,
     AppLocation location,
   ) async {
+    if (!_isValidCoordinate(location.latitude, min: -90, max: 90) ||
+        !_isValidCoordinate(location.longitude, min: -180, max: 180)) {
+      throw const LocationException('Ingresa una ubicación válida.');
+    }
     final updatedSettings = settings.copyWith(
       autoLocation: false,
-      locationName: location.label,
+      locationName: InputSanitizer.location(location.label),
       latitude: location.latitude,
       longitude: location.longitude,
     );
@@ -88,5 +94,13 @@ class LocationSettingsService {
     );
     await _databaseService.saveSettings(updatedSettings);
     return updatedSettings;
+  }
+
+  bool _isValidCoordinate(
+    double value, {
+    required double min,
+    required double max,
+  }) {
+    return value.isFinite && value >= min && value <= max;
   }
 }

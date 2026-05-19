@@ -4,27 +4,20 @@ import 'dart:typed_data';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../security/input_sanitizer.dart';
 import 'pdf_download_service.dart';
 
 Future<void> savePdfBytes({
   required Uint8List bytes,
   required String fileName,
 }) async {
-  final safeFileName = fileName
-      .split((r'[/\\]'))
-      .last
-      .replaceAll((r'[^A-Za-z0-9._-]'), '_');
-  if (safeFileName.isEmpty) {
-    throw const PdfDownloadException('Nombre de PDF inválido.');
-  }
+  final safeFileName = InputSanitizer.fileName(fileName);
 
   final directory = await getTemporaryDirectory();
   final file = File('${directory.path}/$safeFileName');
   await file.writeAsBytes(bytes, flush: true);
   final result = await OpenFilex.open(file.path);
   if (result.type != ResultType.done) {
-    throw PdfDownloadException(
-      'No se pudo abrir el PDF generado (${result.message}).',
-    );
+    throw const PdfDownloadException('No se pudo abrir el PDF generado.');
   }
 }

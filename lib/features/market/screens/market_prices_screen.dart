@@ -5,9 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/config/app_config.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
 import '../../crops_catalog/services/crop_catalog_service.dart';
 import '../../../shared/state/app_scope.dart';
+import '../../../shared/security/input_sanitizer.dart';
 import '../models/market_price_models.dart';
 import '../services/market_price_service.dart';
 
@@ -143,7 +145,9 @@ class _MarketPricesScreenState extends State<MarketPricesScreen> {
                           query: _cropQuery,
                           showAll: _showAllCrops,
                           onQueryChanged: (value) {
-                            setState(() => _cropQuery = value);
+                            setState(
+                              () => _cropQuery = InputSanitizer.search(value),
+                            );
                           },
                           onToggleShowAll: () {
                             setState(() => _showAllCrops = !_showAllCrops);
@@ -686,6 +690,9 @@ class _CropSelector extends StatelessWidget {
         const SizedBox(height: 12),
         TextField(
           controller: controller,
+          inputFormatters: const <TextInputFormatter>[
+            SafeTextInputFormatter(maxLength: 80),
+          ],
           onChanged: onQueryChanged,
           decoration: InputDecoration(
             hintText: 'Buscar cultivo...',
@@ -2227,16 +2234,29 @@ Future<void> _openMarketInMaps(
   BuildContext context,
   MarketCenter market,
 ) async {
-  final uri = Uri.https('www.google.com', '/maps/search/', {
-    'api': '1',
-    'query': '${market.latitude},${market.longitude}',
-  });
   try {
+    final queryParameters = <String, String>{
+      'api': '1',
+      'query': '${market.latitude},${market.longitude}',
+    };
+    final apiKey = AppConfig.mapsApiKey;
+    if (apiKey != null) {
+      queryParameters['key'] = apiKey;
+    }
+    final uri = Uri.https(
+      AppConfig.mapsHost,
+      AppConfig.mapsSearchPath,
+      queryParameters,
+    );
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
       _showMapError(context);
     }
   } on MissingPluginException {
+    if (context.mounted) {
+      _showMapError(context);
+    }
+  } catch (_) {
     if (context.mounted) {
       _showMapError(context);
     }
@@ -2259,8 +2279,16 @@ Future<void> _openMarketDirections(
   if (origin != null) {
     queryParameters['origin'] = origin;
   }
-  final uri = Uri.https('www.google.com', '/maps/dir/', queryParameters);
   try {
+    final apiKey = AppConfig.mapsApiKey;
+    if (apiKey != null) {
+      queryParameters['key'] = apiKey;
+    }
+    final uri = Uri.https(
+      AppConfig.mapsHost,
+      AppConfig.mapsDirectionsPath,
+      queryParameters,
+    );
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
       _showMapError(context);
@@ -2269,11 +2297,22 @@ Future<void> _openMarketDirections(
     if (context.mounted) {
       _showMapError(context);
     }
+  } catch (_) {
+    if (context.mounted) {
+      _showMapError(context);
+    }
   }
 }
 
 Future<void> _openPhoneNumber(BuildContext context, String phoneNumber) async {
-  final uri = Uri(scheme: 'tel', path: phoneNumber);
+  final sanitizedPhone = InputSanitizer.phoneNumber(phoneNumber);
+  if (sanitizedPhone.length < 7 || sanitizedPhone.length > 16) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se pudo iniciar la llamada.')),
+    );
+    return;
+  }
+  final uri = Uri(scheme: 'tel', path: sanitizedPhone);
   try {
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
