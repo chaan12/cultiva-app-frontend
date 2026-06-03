@@ -1079,6 +1079,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
     bool showLeftTitles = false,
     double? leftInterval,
   }) {
+    final bottomLabelStep = _bottomLabelStep(points.length);
+
     return FlTitlesData(
       rightTitles: const AxisTitles(
         sideTitles: SideTitles(showTitles: false, reservedSize: 10),
@@ -1115,8 +1117,8 @@ class _ClimaScreenState extends State<ClimaScreen> {
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
-          reservedSize: 30,
-          interval: points.length > 24 ? 8 : 6,
+          reservedSize: 34,
+          interval: bottomLabelStep.toDouble(),
           getTitlesWidget: (value, meta) {
             final index = value.toInt();
             if (index < 0 ||
@@ -1124,11 +1126,19 @@ class _ClimaScreenState extends State<ClimaScreen> {
                 value != index.toDouble()) {
               return const SizedBox.shrink();
             }
+            final isLast = index == points.length - 1;
+            final showLabel = index % bottomLabelStep == 0 || isLast;
+            if (!showLabel) {
+              return const SizedBox.shrink();
+            }
+
             return SideTitleWidget(
               meta: meta,
               space: 8,
               child: Text(
                 points[index].label,
+                maxLines: 1,
+                overflow: TextOverflow.visible,
                 style: TextStyle(
                   color: AppColors.mutedText(context),
                   fontSize: 10,
@@ -1139,6 +1149,13 @@ class _ClimaScreenState extends State<ClimaScreen> {
         ),
       ),
     );
+  }
+
+  int _bottomLabelStep(int pointCount) {
+    if (pointCount <= 8) return 1;
+    if (pointCount <= 16) return 2;
+    if (pointCount <= 24) return 6;
+    return 8;
   }
 
   Widget _buildSourcesList(WeatherSnapshot weather) {
