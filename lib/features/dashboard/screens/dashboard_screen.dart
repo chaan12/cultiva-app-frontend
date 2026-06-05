@@ -389,6 +389,10 @@ class DashboardScreen extends StatelessWidget {
         ? null
         : CropTrackingService.buildSummary(nextCrop);
     final bestCrop = store.recommendedCropItem;
+    final bestCropIconColor = _readableCropBadgeColor(
+      context,
+      bestCrop.badgeColor,
+    );
 
     return Container(
       width: double.infinity,
@@ -496,10 +500,8 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundColor: bestCrop.badgeColor.withValues(
-                      alpha: 0.14,
-                    ),
-                    child: Icon(bestCrop.icon, color: bestCrop.badgeColor),
+                    backgroundColor: bestCropIconColor.withValues(alpha: 0.16),
+                    child: Icon(bestCrop.icon, color: bestCropIconColor),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -937,6 +939,7 @@ class DashboardScreen extends StatelessWidget {
     CropCatalogItem item, {
     required int rank,
   }) {
+    final iconColor = _readableCropBadgeColor(context, item.badgeColor);
     final rankLabel = switch (rank) {
       1 => 'Top 1',
       2 => 'Top 2',
@@ -967,10 +970,10 @@ class DashboardScreen extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: item.badgeColor.withValues(alpha: 0.12),
+                  color: iconColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(item.icon, color: item.badgeColor),
+                child: Icon(item.icon, color: iconColor),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1024,6 +1027,13 @@ class DashboardScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _readableCropBadgeColor(BuildContext context, Color baseColor) {
+    if (!AppColors.isDark(context) || baseColor.computeLuminance() >= 0.35) {
+      return baseColor;
+    }
+    return Color.lerp(baseColor, Colors.white, 0.55) ?? baseColor;
   }
 
   void _showAllRecommendations(

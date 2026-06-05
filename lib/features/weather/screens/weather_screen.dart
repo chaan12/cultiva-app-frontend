@@ -659,7 +659,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
           style: TextStyle(
             color: AppColors.primaryText(context),
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: 17,
           ),
         ),
         const SizedBox(height: 12),
@@ -673,7 +673,7 @@ class _ClimaScreenState extends State<ClimaScreen> {
               final day = weather.daily[index];
               return Container(
                 width: 150,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: AppColors.cardBackground(context),
                   borderRadius: BorderRadius.circular(22),
@@ -686,28 +686,35 @@ class _ClimaScreenState extends State<ClimaScreen> {
                       day.label,
                       style: TextStyle(
                         color: AppColors.greenText(context),
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       _formatDate(day.date),
-                      style: TextStyle(color: AppColors.mutedText(context)),
-                    ),
-                    const Spacer(),
-                    Text(
-                      day.description,
                       style: TextStyle(
-                        color: AppColors.primaryText(context),
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.mutedText(context),
+                        fontSize: 13,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
+                    Text(
+                      day.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.primaryText(context),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                    ),
+                    const Spacer(),
                     Text(
                       '${day.maxTempC.toStringAsFixed(0)}° / ${day.minTempC.toStringAsFixed(0)}°',
                       style: TextStyle(
                         color: AppColors.primaryText(context),
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

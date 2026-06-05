@@ -220,6 +220,7 @@ class _MarketHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.viewPaddingOf(context).top + 34;
     final settings = AppScope.of(context).settings;
     final userLatitude = settings.latitude ?? 20.9674;
     final userLongitude = settings.longitude ?? -89.5926;
@@ -229,7 +230,7 @@ class _MarketHeader extends StatelessWidget {
     );
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 54, 20, 24),
+      padding: EdgeInsets.fromLTRB(20, topPadding, 20, 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: AppColors.isDark(context)
