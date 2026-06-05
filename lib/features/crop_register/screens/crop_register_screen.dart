@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
 import '../../../shared/security/input_sanitizer.dart';
+import '../../../shared/services/audio/cultiva_sound_service.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
@@ -87,11 +88,15 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
     if (picked == null) {
       return;
     }
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _selectedDate = picked;
       _dateController.text = DateFormat('dd / MM / yyyy').format(picked);
       _errors = Map<String, String>.from(_errors)..remove('fecha');
     });
+    unawaited(CultivaSoundService.selection(context));
   }
 
   bool _validateFields() {
@@ -164,6 +169,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
     if (!mounted) {
       return;
     }
+    unawaited(CultivaSoundService.registrationComplete(context));
     setState(() => _showSuccess = true);
     _successTimer?.cancel();
     _successTimer = Timer(const Duration(seconds: 2), () {
@@ -382,6 +388,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
                 item: item,
                 onTap: () {
                   FocusScope.of(context).unfocus();
+                  unawaited(CultivaSoundService.selection(context));
                   setState(() {
                     _selectedCrop = item;
                     _step = 2;
@@ -457,7 +464,10 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
                 ),
               ),
               TextButton(
-                onPressed: () => setState(() => _step = 1),
+                onPressed: () {
+                  unawaited(CultivaSoundService.tap(context));
+                  setState(() => _step = 1);
+                },
                 child: const Text('Cambiar'),
               ),
             ],
@@ -504,7 +514,10 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => setState(() => _step = 1),
+                onPressed: () {
+                  unawaited(CultivaSoundService.tap(context));
+                  setState(() => _step = 1);
+                },
                 child: const Text('Atrás'),
               ),
             ),
@@ -513,6 +526,7 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   if (_validateFields()) {
+                    unawaited(CultivaSoundService.selection(context));
                     setState(() => _step = 3);
                   }
                 },
@@ -627,7 +641,10 @@ class _CropRegisterScreenState extends State<CropRegisterScreen> {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => setState(() => _step = 2),
+                onPressed: () {
+                  unawaited(CultivaSoundService.tap(context));
+                  setState(() => _step = 2);
+                },
                 child: const Text('Modificar'),
               ),
             ),

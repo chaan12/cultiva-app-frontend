@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../services/audio/cultiva_sound_service.dart';
 
 void showCultivaSnackBar(
   BuildContext context, {
@@ -6,6 +10,16 @@ void showCultivaSnackBar(
   required Color color,
   IconData icon = Icons.check_circle_outline,
 }) {
+  final isError =
+      color == Colors.redAccent ||
+      icon == Icons.error_outline ||
+      icon == Icons.warning_amber_rounded ||
+      icon == Icons.location_off_outlined;
+  unawaited(
+    isError
+        ? CultivaSoundService.error(context)
+        : CultivaSoundService.success(context),
+  );
   final messenger = ScaffoldMessenger.of(context);
   messenger
     ..hideCurrentSnackBar()

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,10 +8,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/config/app_config.dart';
+import '../../../shared/security/input_sanitizer.dart';
+import '../../../shared/services/audio/cultiva_sound_service.dart';
+import '../../../shared/state/app_scope.dart';
 import '../../crops_catalog/models/crop_catalog_item.dart';
 import '../../crops_catalog/services/crop_catalog_service.dart';
-import '../../../shared/state/app_scope.dart';
-import '../../../shared/security/input_sanitizer.dart';
 import '../models/market_price_models.dart';
 import '../services/market_price_service.dart';
 
@@ -382,6 +385,7 @@ class _MarketHeader extends StatelessWidget {
                           ],
                           selected: <bool>{showTon},
                           onSelectionChanged: (values) {
+                            unawaited(CultivaSoundService.selection(context));
                             onUnitChanged(values.first);
                           },
                           style: SegmentedButton.styleFrom(
@@ -782,7 +786,10 @@ class _CropSelector extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: onToggleShowAll,
+              onPressed: () {
+                unawaited(CultivaSoundService.selection(context));
+                onToggleShowAll();
+              },
               icon: Icon(
                 showAll ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
               ),
@@ -827,7 +834,12 @@ class _CropGrid extends StatelessWidget {
           width: itemWidth,
           child: InkWell(
             borderRadius: BorderRadius.circular(18),
-            onTap: () => onSelected(crop.name),
+            onTap: () {
+              if (!selected) {
+                unawaited(CultivaSoundService.selection(context));
+              }
+              onSelected(crop.name);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               padding: const EdgeInsets.all(12),

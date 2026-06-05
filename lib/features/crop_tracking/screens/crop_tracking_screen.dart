@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/crop_record.dart';
 import '../../../shared/services/advisory/agricultural_advisory_service.dart';
+import '../../../shared/services/audio/cultiva_sound_service.dart';
 import '../../../shared/state/app_scope.dart';
 import '../../../shared/widgets/cultiva_snackbar.dart';
 import '../models/crop_tracking_models.dart';
@@ -244,7 +247,10 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
           ),
           Switch.adaptive(
             value: notifications,
-            onChanged: (value) => setState(() => notifications = value),
+            onChanged: (value) {
+              unawaited(CultivaSoundService.selection(context));
+              setState(() => notifications = value);
+            },
             activeThumbColor: const Color(0xFF00C853),
             activeTrackColor: const Color(0xFF00C853).withValues(alpha: 0.35),
           ),
@@ -274,7 +280,13 @@ class _CropTrackingScreenState extends State<CropTrackingScreen> {
     final isSelected = activeTab == id;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => activeTab = id),
+        onTap: () {
+          if (activeTab == id) {
+            return;
+          }
+          unawaited(CultivaSoundService.selection(context));
+          setState(() => activeTab = id);
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           padding: const EdgeInsets.symmetric(vertical: 12),

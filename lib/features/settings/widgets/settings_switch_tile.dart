@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/services/audio/cultiva_sound_service.dart';
 
 class SettingsSwitchTile extends StatelessWidget {
   const SettingsSwitchTile({
@@ -48,7 +51,10 @@ class SettingsSwitchTile extends StatelessWidget {
             value: value,
             activeThumbColor: const Color(0xFF00C853),
             activeTrackColor: const Color(0xFF00C853).withValues(alpha: 0.35),
-            onChanged: onChanged,
+            onChanged: (nextValue) {
+              unawaited(CultivaSoundService.selection(context));
+              onChanged(nextValue);
+            },
           ),
         ],
       ),
